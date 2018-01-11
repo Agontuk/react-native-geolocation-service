@@ -1,0 +1,49 @@
+{
+  "name": "react-native-android-fused-location",
+  "version": "0.0.1",
+  "description": "Geolocation for android using FusedLocationProvider",
+  "main": "src/index.js",
+  "scripts": {
+    "precommit": "lint-staged"
+  },
+  "keywords": [
+    "react-native",
+    "react",
+    "native",
+    "fused",
+    "location",
+    "android"
+  ],
+  "author": {
+    "name": "Iftekhar Rifat",
+    "email": "rifat662@gmail.com",
+    "url": "https://github.com/Agontuk"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Agontuk/react-native-android-fused-location",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Agontuk/react-native-android-fused-location"
+  },
+  "dependencies": {
+    "prop-types": "^15.5.10"
+  },
+  "devDependencies": {
+    "babel-eslint": "^7.2.3",
+    "eslint": "^4.4.1",
+    "eslint-config-airbnb": "^15.1.0",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-jsx-a11y": "^6.0.2",
+    "eslint-plugin-react": "^7.1.0",
+    "husky": "^0.14.3",
+    "lint-staged": "^4.0.3",
+    "react": ">=15.0.0",
+    "react-native": ">=0.24.0"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint",
+      "git add"
+    ]
+  }
+}
