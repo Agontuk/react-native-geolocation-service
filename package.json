@@ -2,7 +2,7 @@
   "name": "react-native-android-fused-location",
   "version": "0.0.1",
   "description": "Geolocation for android using FusedLocationProvider",
-  "main": "src/index.js",
+  "main": "js/index.js",
   "scripts": {
     "precommit": "lint-staged"
   },
