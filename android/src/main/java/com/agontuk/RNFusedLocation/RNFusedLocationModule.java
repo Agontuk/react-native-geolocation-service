@@ -1,5 +1,8 @@
 package com.agontuk.RNFusedLocation;
 
+import android.content.pm.PackageManager;
+import android.Manifest;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import com.facebook.react.bridge.Callback;
@@ -10,9 +13,12 @@ import com.facebook.react.bridge.ReadableMap;
 
 public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     private static final String TAG = "RNFusedLocation";
+    private ReactApplicationContext reactContext;
 
     public RNFusedLocationModule(ReactApplicationContext reactContext) {
         super(reactContext);
+
+        this.reactContext = reactContext;
     }
 
     @Override
@@ -34,6 +40,23 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         Callback error
     ) {
         Log.d(TAG, "Called");
+
+        if (!hasLocationPermission()) {
+            error.invoke(PositionError.buildError(
+                PositionError.PERMISSION_DENIED, "Location permission not granted")
+            );
+
+            return;
+        }
+
         success.invoke("Success");
+    }
+
+    /**
+     * Check if location permissions are granted.
+     */
+    private boolean hasLocationPermission() {
+        return ActivityCompat.checkSelfPermission(reactContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(reactContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED;
     }
 }
