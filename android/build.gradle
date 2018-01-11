@@ -17,5 +17,5 @@ android {
 dependencies {
     provided "com.facebook.react:react-native:+"
     compile "com.android.support:appcompat-v7:25.0.1"
-    compile "com.google.android.gms:play-services-location:10.2.4"
+    compile "com.google.android.gms:play-services-location:11.0.0"
 }

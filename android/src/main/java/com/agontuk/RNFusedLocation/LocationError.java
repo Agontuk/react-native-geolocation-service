@@ -4,7 +4,8 @@ public enum LocationError {
     PERMISSION_DENIED(1),
     POSITION_UNAVAILABLE(2),
     TIMEOUT(3),
-    PLAY_SERVICE_NOT_AVAILABLE(4);
+    PLAY_SERVICE_NOT_AVAILABLE(4),
+    SETTINGS_NOT_SATISFIED(5);
 
     private int value;
 
