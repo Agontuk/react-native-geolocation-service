@@ -40,6 +40,6 @@ export default {
             return;
         }
 
-        RNFusedLocation.getCurrentPosition(success, error, options);
+        RNFusedLocation.getCurrentPosition(options, success, error);
     }
 };

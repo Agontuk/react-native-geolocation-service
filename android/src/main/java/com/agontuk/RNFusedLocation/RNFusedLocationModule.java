@@ -5,6 +5,7 @@ import android.util.Log;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
+import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 
 public class RNFusedLocationModule extends ReactContextBaseJavaModule {
@@ -28,10 +29,11 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
      */
     @ReactMethod
     public void getCurrentPosition(
+        ReadableMap options,
         final Callback success,
-        Callback error,
-        ReadableMap options
+        Callback error
     ) {
         Log.d(TAG, "Called");
+        success.invoke("Success");
     }
 }
