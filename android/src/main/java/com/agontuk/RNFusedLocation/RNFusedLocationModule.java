@@ -155,6 +155,13 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         mSuccessCallback = success;
         mErrorCallback = error;
 
+        boolean highAccuracy = map.hasKey("enableHighAccuracy") && map.getBoolean("enableHighAccuracy");
+
+        if (highAccuracy) {
+            // TODO: Make other PRIORITY_* constants availabe to the user
+            mLocationPriority = LocationRequest.PRIORITY_HIGH_ACCURACY;
+        }
+
         mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(mLocationPriority);
         mLocationRequest.setInterval(mUpdateInterval);
@@ -178,13 +185,15 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
                 @Override
                 public void onComplete(Task<Location> task) {
                     Location location = task.getResult();
-                    if (location == null) {
-                        // Last location is not available, request location update.
-                        requestLocationUpdates();
-                    } else {
+
+                    if (location != null) {
                         mSuccessCallback.invoke(LocationUtils.locationToMap(location));
                         clearCallbacks();
+                        return;
                     }
+
+                    // Last location is not available, request location update.
+                    requestLocationUpdates();
                 }
             });
         }
