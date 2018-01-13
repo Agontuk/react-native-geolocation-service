@@ -127,10 +127,14 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
      *
      * @param options map containing optional arguments: timeout (millis), maximumAge (millis) and
      *        highAccuracy (boolean)
+     * @param success success callback
+     * @param error error callback
      */
     @ReactMethod
     public void getCurrentPosition(ReadableMap options, final Callback success, final Callback error) {
-        if (!LocationUtils.hasLocationPermission(getContext())) {
+        Context context = getContext();
+
+        if (!LocationUtils.hasLocationPermission(context)) {
             error.invoke(LocationUtils.buildError(
                 LocationError.PERMISSION_DENIED.getValue(),
                 "Location permission not granted."
@@ -139,7 +143,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
             return;
         }
 
-        if (!LocationUtils.isGooglePlayServicesAvailable(getContext())) {
+        if (!LocationUtils.isGooglePlayServicesAvailable(context)) {
             error.invoke(LocationUtils.buildError(
                 LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
                 "Google play service is not available."
@@ -160,11 +164,14 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         builder.addLocationRequest(mLocationRequest);
         LocationSettingsRequest locationSettingsRequest = builder.build();
 
-        LocationServices.getSettingsClient(getContext())
+        LocationServices.getSettingsClient(context)
             .checkLocationSettings(locationSettingsRequest)
             .addOnCompleteListener(this);
     }
 
+    /**
+     * Get last known location if it exists, otherwise request a new update.
+     */
     private void getUserLocation() {
         if (mFusedProviderClient != null) {
             mFusedProviderClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
@@ -183,6 +190,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         }
     }
 
+    /**
+     * Request new location update for one time and remove updates after result is returned.
+     */
     private void requestLocationUpdates() {
         if (mFusedProviderClient != null) {
             mFusedProviderClient.requestLocationUpdates(mLocationRequest, new LocationCallback() {
@@ -199,14 +209,23 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         }
     }
 
+    /**
+     * Get react context
+     */
     private Context getContext() {
         return getReactApplicationContext();
     }
 
+    /**
+     * Get the current activity
+     */
     private Activity getActivity() {
         return getCurrentActivity();
     }
 
+    /**
+     * Clear the JS callbacks
+     */
     private void clearCallbacks() {
         mSuccessCallback = null;
         mErrorCallback = null;
