@@ -155,7 +155,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         mSuccessCallback = success;
         mErrorCallback = error;
 
-        boolean highAccuracy = map.hasKey("enableHighAccuracy") && map.getBoolean("enableHighAccuracy");
+        boolean highAccuracy = options.hasKey("enableHighAccuracy") && options.getBoolean("enableHighAccuracy");
 
         if (highAccuracy) {
             // TODO: Make other PRIORITY_* constants availabe to the user
