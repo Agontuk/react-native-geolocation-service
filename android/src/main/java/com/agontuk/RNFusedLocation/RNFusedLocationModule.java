@@ -7,6 +7,7 @@ import android.content.IntentSender.SendIntentException;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.Manifest;
+import android.os.Build;
 import android.os.Looper;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
@@ -47,18 +48,23 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
 
     private Callback mSuccessCallback;
     private Callback mErrorCallback;
-    private FusedLocationProviderClient mFusedLocationProviderClient;
+    private FusedLocationProviderClient mFusedProviderClient;
     private LocationRequest mLocationRequest;
 
     private final ActivityEventListener mActivityEventListener = new BaseActivityEventListener() {
         @Override
         public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent intent) {
-            Log.d(TAG, "Request code: " + requestCode + ", Result code: " + resultCode);
             if (requestCode == REQUEST_CHECK_SETTINGS) {
                 if (resultCode == Activity.RESULT_CANCELED) {
-                    //
+                    // User cancelled the request.
+                    mErrorCallback.invoke(buildError(
+                        LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                        "Location settings are not satisfied."
+                    ));
+                    clearCallbacks();
                 } else if (resultCode == Activity.RESULT_OK) {
-                    //
+                    // Location settings changed successfully, request user location.
+                    getUserLocation();
                 }
             }
         }
@@ -67,13 +73,15 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     public RNFusedLocationModule(ReactApplicationContext reactContext) {
         super(reactContext);
 
-        // mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(reactContext);
+        mFusedProviderClient = LocationServices.getFusedLocationProviderClient(reactContext);
         reactContext.addActivityEventListener(mActivityEventListener);
+
+        Log.d(TAG, TAG + " initialized");
     }
 
     @Override
     public String getName() {
-        return "RNFusedLocation";
+        return TAG;
     }
 
     @Override
@@ -81,14 +89,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         try {
             LocationSettingsResponse response = task.getResult(ApiException.class);
             // All location settings are satisfied, start location request.
-            // LocationServices.getFusedLocationProviderClient(getContext())
-            //     .getLastLocation()
-            //     .addOnCompleteListener(new OnCompleteListener<Location>() {
-            //         @Override
-            //         public void onComplete(Task<Location> task) {
-            //             Log.d(TAG, "Location: " + task.getResult());
-            //         }
-            //     });
+            getUserLocation();
         } catch (ApiException exception) {
             switch (exception.getStatusCode()) {
                 case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
@@ -105,7 +106,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
                         // Show the dialog by calling startResolutionForResult(),
                         // and check the result in onActivityResult().
                         resolvable.startResolutionForResult(
-                            getCurrentActivity(),
+                            getActivity(),
                             REQUEST_CHECK_SETTINGS
                         );
                     } catch (SendIntentException e) {
@@ -172,8 +173,35 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
             .addOnCompleteListener(this);
     }
 
+    private void getUserLocation() {
+        if (mFusedProviderClient != null) {
+            mFusedProviderClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
+                @Override
+                public void onComplete(Task<Location> task) {
+                    Location location = task.getResult();
+                    if (location == null) {
+                        // Last location is not available, request location update.
+                        requestLocationUpdates();
+                        Log.d(TAG, "Location: null");
+                    } else {
+                        mSuccessCallback.invoke(locationToMap(location));
+                        clearCallbacks();
+                    }
+                }
+            });
+        }
+    }
+
+    private void requestLocationUpdates() {
+        //
+    }
+
     private Context getContext() {
         return getReactApplicationContext();
+    }
+
+    private Activity getActivity() {
+        return getCurrentActivity();
     }
 
     private void clearCallbacks() {
@@ -211,5 +239,25 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         }
 
         return error;
+    }
+
+    private WritableMap locationToMap(Location location) {
+        WritableMap map = Arguments.createMap();
+        WritableMap coords = Arguments.createMap();
+
+        coords.putDouble("latitude", location.getLatitude());
+        coords.putDouble("longitude", location.getLongitude());
+        coords.putDouble("altitude", location.getAltitude());
+        coords.putDouble("accuracy", location.getAccuracy());
+        coords.putDouble("heading", location.getBearing());
+        coords.putDouble("speed", location.getSpeed());
+        map.putMap("coords", coords);
+        map.putDouble("timestamp", location.getTime());
+
+        if (Build.VERSION.SDK_INT >= 18) {
+            map.putBoolean("mocked", location.isFromMockProvider());
+        }
+
+        return map;
     }
 }
