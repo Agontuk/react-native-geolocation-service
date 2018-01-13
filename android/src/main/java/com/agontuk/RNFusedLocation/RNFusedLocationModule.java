@@ -4,28 +4,20 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
-import android.content.pm.PackageManager;
 import android.location.Location;
-import android.Manifest;
-import android.os.Build;
 import android.os.Looper;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import com.facebook.react.bridge.ActivityEventListener;
-import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.BaseActivityEventListener;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.bridge.WritableMap;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -57,7 +49,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
             if (requestCode == REQUEST_CHECK_SETTINGS) {
                 if (resultCode == Activity.RESULT_CANCELED) {
                     // User cancelled the request.
-                    mErrorCallback.invoke(buildError(
+                    mErrorCallback.invoke(LocationUtils.buildError(
                         LocationError.SETTINGS_NOT_SATISFIED.getValue(),
                         "Location settings are not satisfied."
                     ));
@@ -119,7 +111,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
                 default:
                     // TODO: we may have to handle other use case here.
                     // For now just say that settings are not ok.
-                    mErrorCallback.invoke(buildError(
+                    mErrorCallback.invoke(LocationUtils.buildError(
                         LocationError.SETTINGS_NOT_SATISFIED.getValue(),
                         "Location settings are not satisfied."
                     ));
@@ -138,8 +130,8 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
      */
     @ReactMethod
     public void getCurrentPosition(ReadableMap options, final Callback success, final Callback error) {
-        if (!hasLocationPermission()) {
-            error.invoke(buildError(
+        if (!LocationUtils.hasLocationPermission(getContext())) {
+            error.invoke(LocationUtils.buildError(
                 LocationError.PERMISSION_DENIED.getValue(),
                 "Location permission not granted."
             ));
@@ -147,8 +139,8 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
             return;
         }
 
-        if (!isGooglePlayServicesAvailable()) {
-            error.invoke(buildError(
+        if (!LocationUtils.isGooglePlayServicesAvailable(getContext())) {
+            error.invoke(LocationUtils.buildError(
                 LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
                 "Google play service is not available."
             ));
@@ -184,7 +176,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
                         requestLocationUpdates();
                         Log.d(TAG, "Location: null");
                     } else {
-                        mSuccessCallback.invoke(locationToMap(location));
+                        mSuccessCallback.invoke(LocationUtils.locationToMap(location));
                         clearCallbacks();
                     }
                 }
@@ -207,57 +199,5 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     private void clearCallbacks() {
         mSuccessCallback = null;
         mErrorCallback = null;
-    }
-
-    /**
-     * Check if location permissions are granted.
-     */
-    private boolean hasLocationPermission() {
-        return ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-            ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    /**
-     * Check if google play service is available on device.
-     */
-    private boolean isGooglePlayServicesAvailable() {
-        int result =  GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getContext());
-
-        // TODO: Handle other possible success types.
-        return result == ConnectionResult.SUCCESS || result == ConnectionResult.SERVICE_UPDATING;
-    }
-
-    /**
-     * Build error response for error callback.
-     */
-    private WritableMap buildError(int code, String message) {
-        WritableMap error = Arguments.createMap();
-        error.putInt("code", code);
-
-        if (message != null) {
-            error.putString("message", message);
-        }
-
-        return error;
-    }
-
-    private WritableMap locationToMap(Location location) {
-        WritableMap map = Arguments.createMap();
-        WritableMap coords = Arguments.createMap();
-
-        coords.putDouble("latitude", location.getLatitude());
-        coords.putDouble("longitude", location.getLongitude());
-        coords.putDouble("altitude", location.getAltitude());
-        coords.putDouble("accuracy", location.getAccuracy());
-        coords.putDouble("heading", location.getBearing());
-        coords.putDouble("speed", location.getSpeed());
-        map.putMap("coords", coords);
-        map.putDouble("timestamp", location.getTime());
-
-        if (Build.VERSION.SDK_INT >= 18) {
-            map.putBoolean("mocked", location.isFromMockProvider());
-        }
-
-        return map;
     }
 }
