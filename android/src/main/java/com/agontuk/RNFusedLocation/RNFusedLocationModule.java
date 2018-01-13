@@ -68,7 +68,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         mFusedProviderClient = LocationServices.getFusedLocationProviderClient(reactContext);
         reactContext.addActivityEventListener(mActivityEventListener);
 
-        Log.d(TAG, TAG + " initialized");
+        Log.i(TAG, TAG + " initialized");
     }
 
     @Override
@@ -174,7 +174,6 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
                     if (location == null) {
                         // Last location is not available, request location update.
                         requestLocationUpdates();
-                        Log.d(TAG, "Location: null");
                     } else {
                         mSuccessCallback.invoke(LocationUtils.locationToMap(location));
                         clearCallbacks();
@@ -185,7 +184,19 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     }
 
     private void requestLocationUpdates() {
-        //
+        if (mFusedProviderClient != null) {
+            mFusedProviderClient.requestLocationUpdates(mLocationRequest, new LocationCallback() {
+                @Override
+                public void onLocationResult(LocationResult locationResult) {
+                    // Remove further location update.
+                    mFusedProviderClient.removeLocationUpdates(this);
+
+                    Location location = locationResult.getLastLocation();
+                    mSuccessCallback.invoke(LocationUtils.locationToMap(location));
+                    clearCallbacks();
+                }
+            }, Looper.myLooper());
+        }
     }
 
     private Context getContext() {
