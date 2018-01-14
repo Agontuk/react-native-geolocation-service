@@ -2,44 +2,34 @@ import { NativeModules, Platform } from 'react-native';
 
 const { RNFusedLocation } = NativeModules;
 
+const noop = () => {};
+
 // TODO: add static type checker
-export default {
-    /**
-     * Sets configuration options that will be used in all location requests.
-     *
-     * ### Options
-     *
-     * #### iOS
-     *
-     * - `skipPermissionRequests` - defaults to `false`, if `true` you must request permissions
-     * before using Geolocation APIs.
-     *
-     */
-    setRNConfiguration: (config) => {
-        if (Platform.OS === 'android') return;
-
-        global.navigator.geolocation.setRNConfiguration(config);
+const Geolocation = Platform.OS === 'ios' ? global.navigator.geolocation : {
+    setRNConfiguration: (config) => { // eslint-disable-line no-unused-vars
+        // eslint-disable-next-line no-console
+        console.warn('setRNConfiguration is not supported on android');
     },
 
-    /**
-     * Request suitable Location permission based on the key configured on pList.
-     * If NSLocationAlwaysUsageDescription is set, it will request Always authorization,
-     * although if NSLocationWhenInUseUsageDescription is set, it will request InUse
-     * authorization.
-     */
     requestAuthorization: () => {
-        if (Platform.OS === 'android') return;
-
-        global.navigator.geolocation.requestAuthorization();
+        // eslint-disable-next-line no-console
+        console.warn('requestAuthorization is not supported on android');
     },
 
-    getCurrentPosition: async (success, error, options = {}) => {
-        if (Platform.OS === 'ios') {
-            // Use the react-native built in Geolocation service.
-            global.navigator.geolocation.getCurrentPosition(success, error, options);
-            return;
-        }
-
+    getCurrentPosition: async (success, error = noop, options = {}) => {
+        // Right now, we're assuming user already granted location permission.
         RNFusedLocation.getCurrentPosition(options, success, error);
+    },
+
+    watchPosition: (success, error = noop, options = {}) => { // eslint-disable-line no-unused-vars
+        // eslint-disable-next-line no-console
+        console.warn('watchPosition is not yet implemented');
+    },
+
+    clearWatch: (watchID) => { // eslint-disable-line no-unused-vars
+        // eslint-disable-next-line no-console
+        console.warn('clearWatch is not yet implemented');
     }
 };
+
+export default Geolocation;
