@@ -50,10 +50,12 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     private final Runnable mTimeoutRunnable = new Runnable() {
         @Override
         public synchronized void run() {
-            mErrorCallback.invoke(LocationUtils.buildError(
-                LocationError.TIMEOUT.getValue(),
-                "Location request timed out."
-            ));
+            if (mErrorCallback != null) {
+                mErrorCallback.invoke(LocationUtils.buildError(
+                    LocationError.TIMEOUT.getValue(),
+                    "Location request timed out."
+                ));
+            }
 
             clearCallbacks();
 
@@ -133,9 +135,17 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
                             REQUEST_CHECK_SETTINGS
                         );
                     } catch (SendIntentException e) {
-                        // Ignore the error.
+                        mErrorCallback.invoke(LocationUtils.buildError(
+                            LocationError.INTERNAL_ERROR.getValue(),
+                            "Internal error occurred."
+                        ));
+                        clearCallbacks();
                     } catch (ClassCastException e) {
-                        // Ignore, should be an impossible error.
+                        mErrorCallback.invoke(LocationUtils.buildError(
+                            LocationError.INTERNAL_ERROR.getValue(),
+                            "Internal error occurred."
+                        ));
+                        clearCallbacks();
                     }
 
                     break;
@@ -249,7 +259,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
      * Handle new location updates
      */
     private synchronized void onLocationChanged(Location location) {
-        mSuccessCallback.invoke(LocationUtils.locationToMap(location));
+        if (mSuccessCallback != null) {
+            mSuccessCallback.invoke(LocationUtils.locationToMap(location));
+        }
 
         mHandler.removeCallbacks(mTimeoutRunnable);
 
