@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.location.Location;
+import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
@@ -42,6 +43,27 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     private Callback mErrorCallback;
     private FusedLocationProviderClient mFusedProviderClient;
     private LocationRequest mLocationRequest;
+
+    private long mTimeout = Long.MAX_VALUE;
+    private final Handler mHandler = new Handler(Looper.getMainLooper());
+    private final Runnable mTimeoutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mErrorCallback.invoke(LocationUtils.buildError(
+                LocationError.TIMEOUT.getValue(),
+                "Location request timed out."
+            ));
+
+            clearCallbacks();
+
+            // Remove further location update.
+            if (mFusedProviderClient != null && mLocationCallback != null) {
+                mFusedProviderClient.removeLocationUpdates(mLocationCallback);
+            }
+
+            Log.i(TAG, TAG + ": Location request timed out");
+        }
+    };
 
     private final ActivityEventListener mActivityEventListener = new BaseActivityEventListener() {
         @Override
@@ -170,6 +192,8 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
             mLocationPriority = LocationRequest.PRIORITY_HIGH_ACCURACY;
         }
 
+        mTimeout = options.hasKey("timeout") ? (long) options.getDouble("timeout") : mTimeout;
+
         mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(mLocationPriority);
         mLocationRequest.setInterval(mUpdateInterval);
@@ -212,7 +236,8 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
      */
     private void requestLocationUpdates() {
         if (mFusedProviderClient != null) {
-            mFusedProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+            mFusedProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.getMainLooper());
+            mHandler.postDelayed(mTimeoutRunnable, mTimeout);
         }
     }
 
@@ -220,12 +245,15 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
      * Handle new location updates
      */
     private void onLocationChanged(Location location) {
+        mSuccessCallback.invoke(LocationUtils.locationToMap(location));
+
+        mHandler.removeCallbacks(mTimeoutRunnable);
+
         // Remove further location update.
         if (mFusedProviderClient != null && mLocationCallback != null) {
             mFusedProviderClient.removeLocationUpdates(mLocationCallback);
         }
 
-        mSuccessCallback.invoke(LocationUtils.locationToMap(location));
         clearCallbacks();
     }
 
