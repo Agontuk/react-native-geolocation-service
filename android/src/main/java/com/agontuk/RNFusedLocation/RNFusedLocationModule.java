@@ -48,7 +48,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private final Runnable mTimeoutRunnable = new Runnable() {
         @Override
-        public void run() {
+        public synchronized void run() {
             mErrorCallback.invoke(LocationUtils.buildError(
                 LocationError.TIMEOUT.getValue(),
                 "Location request timed out."
@@ -244,7 +244,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     /**
      * Handle new location updates
      */
-    private void onLocationChanged(Location location) {
+    private synchronized void onLocationChanged(Location location) {
         mSuccessCallback.invoke(LocationUtils.locationToMap(location));
 
         mHandler.removeCallbacks(mTimeoutRunnable);
