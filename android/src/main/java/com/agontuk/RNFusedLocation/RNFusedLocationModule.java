@@ -16,6 +16,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.SystemClock;
 
 import com.google.android.gms.common.api.ApiException;
@@ -52,14 +53,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     private final Runnable mTimeoutRunnable = new Runnable() {
         @Override
         public synchronized void run() {
-            if (mErrorCallback != null) {
-                mErrorCallback.invoke(LocationUtils.buildError(
-                    LocationError.TIMEOUT.getValue(),
-                    "Location request timed out."
-                ));
-            }
-
-            clearCallbacks();
+            invokeError(LocationError.TIMEOUT.getValue(), "Location request timed out.");
 
             // Remove further location update.
             if (mFusedProviderClient != null && mLocationCallback != null) {
@@ -77,11 +71,8 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
                 if (resultCode == Activity.RESULT_CANCELED) {
                     // User cancelled the request.
                     // TODO: allow user to ignore this & request location.
-                    mErrorCallback.invoke(LocationUtils.buildError(
-                        LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                        "Location settings are not satisfied."
-                    ));
-                    clearCallbacks();
+                    invokeError(LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                        "Location settings are not satisfied.");
                 } else if (resultCode == Activity.RESULT_OK) {
                     // Location settings changed successfully, request user location.
                     getUserLocation();
@@ -138,28 +129,18 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
                             REQUEST_CHECK_SETTINGS
                         );
                     } catch (SendIntentException e) {
-                        mErrorCallback.invoke(LocationUtils.buildError(
-                            LocationError.INTERNAL_ERROR.getValue(),
-                            "Internal error occurred."
-                        ));
-                        clearCallbacks();
+                        invokeError(LocationError.INTERNAL_ERROR.getValue(), "Internal error occurred");
                     } catch (ClassCastException e) {
-                        mErrorCallback.invoke(LocationUtils.buildError(
-                            LocationError.INTERNAL_ERROR.getValue(),
-                            "Internal error occurred."
-                        ));
-                        clearCallbacks();
+                        invokeError(LocationError.INTERNAL_ERROR.getValue(), "Internal error occurred");
                     }
 
                     break;
                 default:
                     // TODO: we may have to handle other use case here.
                     // For now just say that settings are not ok.
-                    mErrorCallback.invoke(LocationUtils.buildError(
-                        LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                        "Location settings are not satisfied."
-                    ));
-                    clearCallbacks();
+                    invokeError(LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                        "Location settings are not satisfied.");
+
                     break;
             }
         }
@@ -178,26 +159,19 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     public void getCurrentPosition(ReadableMap options, final Callback success, final Callback error) {
         Context context = getContext();
 
-        if (!LocationUtils.hasLocationPermission(context)) {
-            error.invoke(LocationUtils.buildError(
-                LocationError.PERMISSION_DENIED.getValue(),
-                "Location permission not granted."
-            ));
+        mSuccessCallback = success;
+        mErrorCallback = error;
 
+        if (!LocationUtils.hasLocationPermission(context)) {
+            invokeError(LocationError.PERMISSION_DENIED.getValue(), "Location permission not granted.");
             return;
         }
 
         if (!LocationUtils.isGooglePlayServicesAvailable(context)) {
-            error.invoke(LocationUtils.buildError(
-                LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
-                "Google play service is not available."
-            ));
-
+            invokeError(LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
+                "Google play service is not available.");
             return;
         }
-
-        mSuccessCallback = success;
-        mErrorCallback = error;
 
         mTimeout = options.hasKey("timeout") ? (long) options.getDouble("timeout") : mTimeout;
         mMaximumAge = options.hasKey("maximumAge") ? options.getDouble("maximumAge") : mMaximumAge;
@@ -237,8 +211,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
 
                     if (location != null &&
                             (SystemClock.currentTimeMillis() - location.getTime()) < mMaximumAge) {
-                        mSuccessCallback.invoke(LocationUtils.locationToMap(location));
-                        clearCallbacks();
+                        invokeSuccess(LocationUtils.locationToMap(location));
                         return;
                     }
 
@@ -263,9 +236,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
      * Handle new location updates
      */
     private synchronized void onLocationChanged(Location location) {
-        if (mSuccessCallback != null) {
-            mSuccessCallback.invoke(LocationUtils.locationToMap(location));
-        }
+        invokeSuccess(LocationUtils.locationToMap(location));
 
         mHandler.removeCallbacks(mTimeoutRunnable);
 
@@ -273,8 +244,6 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         if (mFusedProviderClient != null && mLocationCallback != null) {
             mFusedProviderClient.removeLocationUpdates(mLocationCallback);
         }
-
-        clearCallbacks();
     }
 
     /**
@@ -297,5 +266,27 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     private void clearCallbacks() {
         mSuccessCallback = null;
         mErrorCallback = null;
+    }
+
+    /**
+     * Helper method to invoke success callback
+     */
+    private void invokeSuccess(WritableMap data) {
+        if (mSuccessCallback != null) {
+            mSuccessCallback.invoke(data);
+        }
+
+        clearCallbacks();
+    }
+
+    /**
+     * Helper method to invoke error callback
+     */
+    private void invokeError(int code, String message) {
+        if (mErrorCallback != null) {
+            mErrorCallback.invoke(LocationUtils.buildError(code, message));
+        }
+
+        clearCallbacks();
     }
 }
