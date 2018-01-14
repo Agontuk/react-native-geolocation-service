@@ -16,6 +16,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.common.SystemClock;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -39,6 +40,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     private int mLocationPriority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
     private long mUpdateInterval = 10 * 1000;  /* 10 secs */
     private long mFastestInterval = 5 * 1000; /* 5 sec */
+    private double mMaximumAge = Double.POSITIVE_INFINITY;
     private long mTimeout = Long.MAX_VALUE;
 
     private Callback mSuccessCallback;
@@ -64,7 +66,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
                 mFusedProviderClient.removeLocationUpdates(mLocationCallback);
             }
 
-            Log.i(TAG, TAG + ": Location request timed out");
+            Log.i(TAG, "Location request timed out");
         }
     };
 
@@ -74,6 +76,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
             if (requestCode == REQUEST_CHECK_SETTINGS) {
                 if (resultCode == Activity.RESULT_CANCELED) {
                     // User cancelled the request.
+                    // TODO: allow user to ignore this & request location.
                     mErrorCallback.invoke(LocationUtils.buildError(
                         LocationError.SETTINGS_NOT_SATISFIED.getValue(),
                         "Location settings are not satisfied."
@@ -196,6 +199,8 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         mSuccessCallback = success;
         mErrorCallback = error;
 
+        mTimeout = options.hasKey("timeout") ? (long) options.getDouble("timeout") : mTimeout;
+        mMaximumAge = options.hasKey("maximumAge") ? options.getDouble("maximumAge") : mMaximumAge;
         boolean highAccuracy = options.hasKey("enableHighAccuracy") && options.getBoolean("enableHighAccuracy");
         float distanceFilter = options.hasKey("distanceFilter") ?
             (float) options.getDouble("distanceFilter") : DEFAULT_LOCATION_ACCURACY;
@@ -204,8 +209,6 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
             // TODO: Make other PRIORITY_* constants availabe to the user
             mLocationPriority = LocationRequest.PRIORITY_HIGH_ACCURACY;
         }
-
-        mTimeout = options.hasKey("timeout") ? (long) options.getDouble("timeout") : mTimeout;
 
         mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(mLocationPriority)
@@ -232,7 +235,8 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
                 public void onComplete(Task<Location> task) {
                     Location location = task.getResult();
 
-                    if (location != null) {
+                    if (location != null &&
+                            (SystemClock.currentTimeMillis() - location.getTime()) < mMaximumAge) {
                         mSuccessCallback.invoke(LocationUtils.locationToMap(location));
                         clearCallbacks();
                         return;
