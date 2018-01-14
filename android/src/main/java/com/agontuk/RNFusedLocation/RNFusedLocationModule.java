@@ -62,6 +62,14 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         }
     };
 
+    private final LocationCallback mLocationCallback = new LocationCallback() {
+        @Override
+        public void onLocationResult(LocationResult locationResult) {
+            Location location = locationResult.getLastLocation();
+            onLocationChanged(location);
+        }
+    };
+
     public RNFusedLocationModule(ReactApplicationContext reactContext) {
         super(reactContext);
 
@@ -204,18 +212,21 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
      */
     private void requestLocationUpdates() {
         if (mFusedProviderClient != null) {
-            mFusedProviderClient.requestLocationUpdates(mLocationRequest, new LocationCallback() {
-                @Override
-                public void onLocationResult(LocationResult locationResult) {
-                    // Remove further location update.
-                    mFusedProviderClient.removeLocationUpdates(this);
-
-                    Location location = locationResult.getLastLocation();
-                    mSuccessCallback.invoke(LocationUtils.locationToMap(location));
-                    clearCallbacks();
-                }
-            }, Looper.myLooper());
+            mFusedProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
         }
+    }
+
+    /**
+     * Handle new location updates
+     */
+    private void onLocationChanged(Location location) {
+        // Remove further location update.
+        if (mFusedProviderClient != null && mLocationCallback != null) {
+            mFusedProviderClient.removeLocationUpdates(mLocationCallback);
+        }
+
+        mSuccessCallback.invoke(LocationUtils.locationToMap(location));
+        clearCallbacks();
     }
 
     /**
