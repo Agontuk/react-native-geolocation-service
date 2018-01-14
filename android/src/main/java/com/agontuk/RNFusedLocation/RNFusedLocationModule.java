@@ -35,16 +35,17 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
 
     private static final String TAG = "RNFusedLocation";
     private static final int REQUEST_CHECK_SETTINGS = 11403;
+    private static final float DEFAULT_LOCATION_ACCURACY = 100;
     private int mLocationPriority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
     private long mUpdateInterval = 10 * 1000;  /* 10 secs */
     private long mFastestInterval = 5 * 1000; /* 5 sec */
+    private long mTimeout = Long.MAX_VALUE;
 
     private Callback mSuccessCallback;
     private Callback mErrorCallback;
     private FusedLocationProviderClient mFusedProviderClient;
     private LocationRequest mLocationRequest;
 
-    private long mTimeout = Long.MAX_VALUE;
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private final Runnable mTimeoutRunnable = new Runnable() {
         @Override
@@ -186,6 +187,8 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         mErrorCallback = error;
 
         boolean highAccuracy = options.hasKey("enableHighAccuracy") && options.getBoolean("enableHighAccuracy");
+        float distanceFilter = options.hasKey("distanceFilter") ?
+            (float) options.getDouble("distanceFilter") : DEFAULT_LOCATION_ACCURACY;
 
         if (highAccuracy) {
             // TODO: Make other PRIORITY_* constants availabe to the user
@@ -195,9 +198,10 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         mTimeout = options.hasKey("timeout") ? (long) options.getDouble("timeout") : mTimeout;
 
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setPriority(mLocationPriority);
-        mLocationRequest.setInterval(mUpdateInterval);
-        mLocationRequest.setFastestInterval(mFastestInterval);
+        mLocationRequest.setPriority(mLocationPriority)
+            .setInterval(mUpdateInterval)
+            .setFastestInterval(mFastestInterval)
+            .setSmallestDisplacement(distanceFilter);
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
         builder.addLocationRequest(mLocationRequest);
