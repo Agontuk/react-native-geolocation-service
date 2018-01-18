@@ -1,5 +1,5 @@
 {
-  "name": "react-native-geolocation",
+  "name": "react-native-geolocation-service",
   "version": "0.0.1",
   "description": "React native geolocation service for iOS and android",
   "main": "js/index.js",
@@ -22,10 +22,10 @@
     "url": "https://github.com/Agontuk"
   },
   "license": "MIT",
-  "homepage": "https://github.com/Agontuk/react-native-geolocation",
+  "homepage": "https://github.com/Agontuk/react-native-geolocation-service",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Agontuk/react-native-geolocation"
+    "url": "https://github.com/Agontuk/react-native-geolocation-service"
   },
   "devDependencies": {
     "babel-eslint": "^7.2.3",

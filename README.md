@@ -1,4 +1,4 @@
-# react-native-geolocation
+# react-native-geolocation-service
 React native geolocation service for iOS and android.
 
 # Why ?
@@ -6,7 +6,7 @@ This library is created in an attempt to fix the location timeout issue on andro
 
 # Installation
 ```bash
-yarn add react-native-geolocation
+yarn add react-native-geolocation-service
 ```
 
 # Setup
@@ -21,7 +21,7 @@ No additional setup is required, since it uses the React Native's default Geoloc
     ...
     dependencies {
         ...
-        compile project(':react-native-geolocation')
+        compile project(':react-native-geolocation-service')
     }
     ```
 
@@ -31,7 +31,7 @@ No additional setup is required, since it uses the React Native's default Geoloc
     ...
     dependencies {
         ...
-        compile(project(':react-native-geolocation')) {
+        compile(project(':react-native-geolocation-service')) {
             exclude group: 'com.google.android.gms', module: 'play-services-location'
         }
         compile 'com.google.android.gms:play-services-location:11.0.4'
@@ -42,8 +42,8 @@ No additional setup is required, since it uses the React Native's default Geoloc
 
     ```gradle
     ...
-    include ':react-native-geolocation'
-    project(':react-native-geolocation').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-geolocation/android')
+    include ':react-native-geolocation-service'
+    project(':react-native-geolocation-service').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-geolocation-service/android')
     ```
 
 3. In `MainApplication.java`
@@ -71,7 +71,7 @@ Since this library was meant to be a drop-in replacement for the RN's Geolocatio
 
 ```js
 ...
-import Geolocation from 'react-native-geolocation';
+import Geolocation from 'react-native-geolocation-service';
 ...
 
 componentDidMount() {
