@@ -52,7 +52,7 @@ No additional setup is required, since it uses the React Native's default Geoloc
     ...
     import com.agontuk.RNFusedLocation.RNFusedLocationPackage;
 
-    public class MainActivity extends ReactActivity {
+    public class MainApplication extends Application implements ReactApplication {
         ...
         @Override
         protected List<ReactPackage> getPackages() {
