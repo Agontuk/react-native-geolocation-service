@@ -31,9 +31,7 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
-public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
-        OnCompleteListener<LocationSettingsResponse> {
-
+public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     private static final String TAG = "RNFusedLocation";
     private static final int REQUEST_CHECK_SETTINGS = 11403;
     private static final float DEFAULT_LOCATION_ACCURACY = 100;
@@ -104,49 +102,6 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         return TAG;
     }
 
-    @Override
-    public void onComplete(Task<LocationSettingsResponse> task) {
-        try {
-            LocationSettingsResponse response = task.getResult(ApiException.class);
-            // All location settings are satisfied, start location request.
-            getUserLocation();
-        } catch (ApiException exception) {
-            switch (exception.getStatusCode()) {
-                case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                    /**
-                     * Location settings are not satisfied. But could be fixed by showing the
-                     * user a dialog. It means either location serivce is not enabled or
-                     * default location mode is not enough to perform the request.
-                     *
-                     * TODO: we may want to make it optional & just say that settings are not ok.
-                     */
-                    try {
-                        // Cast to a resolvable exception.
-                        ResolvableApiException resolvable = (ResolvableApiException) exception;
-                        // Show the dialog by calling startResolutionForResult(),
-                        // and check the result in onActivityResult().
-                        resolvable.startResolutionForResult(
-                            getActivity(),
-                            REQUEST_CHECK_SETTINGS
-                        );
-                    } catch (SendIntentException e) {
-                        invokeError(LocationError.INTERNAL_ERROR.getValue(), "Internal error occurred");
-                    } catch (ClassCastException e) {
-                        invokeError(LocationError.INTERNAL_ERROR.getValue(), "Internal error occurred");
-                    }
-
-                    break;
-                default:
-                    // TODO: we may have to handle other use case here.
-                    // For now just say that settings are not ok.
-                    invokeError(LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                        "Location settings are not satisfied.");
-
-                    break;
-            }
-        }
-    }
-
     /**
      * Get the current position. This can return almost immediately if the location is cached or
      * request an update, which might take a while.
@@ -189,7 +144,12 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
 
         LocationServices.getSettingsClient(context)
             .checkLocationSettings(locationSettingsRequest)
-            .addOnCompleteListener(this);
+            .addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+                @Override
+                public void onComplete(Task<LocationSettingsResponse> task) {
+                    onLocationSettingsResponse(task);
+                }
+            });
     }
 
     /**
@@ -207,6 +167,52 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         LocationSettingsRequest locationSettingsRequest = builder.build();
 
         return locationSettingsRequest;
+    }
+
+    /**
+     * Check location setting response and decide whether to proceed with
+     * location request or not.
+     */
+    private void onLocationSettingsResponse(Task<LocationSettingsResponse> task) {
+        try {
+            LocationSettingsResponse response = task.getResult(ApiException.class);
+            // All location settings are satisfied, start location request.
+            getUserLocation();
+        } catch (ApiException exception) {
+            switch (exception.getStatusCode()) {
+                case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                    /**
+                     * Location settings are not satisfied. But could be fixed by showing the
+                     * user a dialog. It means either location serivce is not enabled or
+                     * default location mode is not enough to perform the request.
+                     *
+                     * TODO: we may want to make it optional & just say that settings are not ok.
+                     */
+                    try {
+                        // Cast to a resolvable exception.
+                        ResolvableApiException resolvable = (ResolvableApiException) exception;
+                        // Show the dialog by calling startResolutionForResult(),
+                        // and check the result in onActivityResult().
+                        resolvable.startResolutionForResult(
+                            getActivity(),
+                            REQUEST_CHECK_SETTINGS
+                        );
+                    } catch (SendIntentException e) {
+                        invokeError(LocationError.INTERNAL_ERROR.getValue(), "Internal error occurred");
+                    } catch (ClassCastException e) {
+                        invokeError(LocationError.INTERNAL_ERROR.getValue(), "Internal error occurred");
+                    }
+
+                    break;
+                default:
+                    // TODO: we may have to handle other use case here.
+                    // For now just say that settings are not ok.
+                    invokeError(LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                        "Location settings are not satisfied.");
+
+                    break;
+            }
+        }
     }
 
     /**
