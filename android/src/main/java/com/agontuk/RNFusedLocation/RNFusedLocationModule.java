@@ -1,7 +1,6 @@
 package com.agontuk.RNFusedLocation;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.location.Location;
@@ -38,11 +37,13 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     private static final String TAG = "RNFusedLocation";
     private static final int REQUEST_CHECK_SETTINGS = 11403;
     private static final float DEFAULT_LOCATION_ACCURACY = 100;
+
     private int mLocationPriority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
     private long mUpdateInterval = 10 * 1000;  /* 10 secs */
     private long mFastestInterval = 5 * 1000; /* 5 sec */
     private double mMaximumAge = Double.POSITIVE_INFINITY;
     private long mTimeout = Long.MAX_VALUE;
+    private float mDistanceFilter = DEFAULT_LOCATION_ACCURACY;
 
     private Callback mSuccessCallback;
     private Callback mErrorCallback;
@@ -150,14 +151,14 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
      * Get the current position. This can return almost immediately if the location is cached or
      * request an update, which might take a while.
      *
-     * @param options map containing optional arguments: timeout (millis), maximumAge (millis) and
-     *        highAccuracy (boolean)
+     * @param options map containing optional arguments: timeout (millis), maximumAge (millis),
+     *        highAccuracy (boolean) and distanceFilter
      * @param success success callback
      * @param error error callback
      */
     @ReactMethod
     public void getCurrentPosition(ReadableMap options, final Callback success, final Callback error) {
-        Context context = getContext();
+        ReactApplicationContext context = getContext();
 
         mSuccessCallback = success;
         mErrorCallback = error;
@@ -175,9 +176,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
 
         mTimeout = options.hasKey("timeout") ? (long) options.getDouble("timeout") : mTimeout;
         mMaximumAge = options.hasKey("maximumAge") ? options.getDouble("maximumAge") : mMaximumAge;
+        mDistanceFilter = options.hasKey("distanceFilter") ?
+            (float) options.getDouble("distanceFilter") : mDistanceFilter;
         boolean highAccuracy = options.hasKey("enableHighAccuracy") && options.getBoolean("enableHighAccuracy");
-        float distanceFilter = options.hasKey("distanceFilter") ?
-            (float) options.getDouble("distanceFilter") : DEFAULT_LOCATION_ACCURACY;
 
         if (highAccuracy) {
             // TODO: Make other PRIORITY_* constants availabe to the user
@@ -188,7 +189,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         mLocationRequest.setPriority(mLocationPriority)
             .setInterval(mUpdateInterval)
             .setFastestInterval(mFastestInterval)
-            .setSmallestDisplacement(distanceFilter);
+            .setSmallestDisplacement(mDistanceFilter);
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
         builder.addLocationRequest(mLocationRequest);
@@ -249,7 +250,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     /**
      * Get react context
      */
-    private Context getContext() {
+    private ReactApplicationContext getContext() {
         return getReactApplicationContext();
     }
 
