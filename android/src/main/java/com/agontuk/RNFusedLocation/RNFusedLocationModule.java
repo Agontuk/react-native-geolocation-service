@@ -185,6 +185,17 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
             mLocationPriority = LocationRequest.PRIORITY_HIGH_ACCURACY;
         }
 
+        LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
+
+        LocationServices.getSettingsClient(context)
+            .checkLocationSettings(locationSettingsRequest)
+            .addOnCompleteListener(this);
+    }
+
+    /**
+     * Build location setting request using current configuration
+     */
+    private LocationSettingsRequest buildLocationSettingsRequest() {
         mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(mLocationPriority)
             .setInterval(mUpdateInterval)
@@ -195,9 +206,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
         builder.addLocationRequest(mLocationRequest);
         LocationSettingsRequest locationSettingsRequest = builder.build();
 
-        LocationServices.getSettingsClient(context)
-            .checkLocationSettings(locationSettingsRequest)
-            .addOnCompleteListener(this);
+        return locationSettingsRequest;
     }
 
     /**
