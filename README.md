@@ -34,7 +34,7 @@ No additional setup is required, since it uses the React Native's default Geoloc
         compile(project(':react-native-geolocation-service')) {
             exclude group: 'com.google.android.gms', module: 'play-services-location'
         }
-        compile 'com.google.android.gms:play-services-location:11.8.0'
+        compile 'com.google.android.gms:play-services-location:<insert your play service version here>'
     }
     ```
 
