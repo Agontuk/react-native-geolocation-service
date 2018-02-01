@@ -34,14 +34,15 @@ import com.google.android.gms.tasks.Task;
 public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     private static final String TAG = "RNFusedLocation";
     private static final int REQUEST_CHECK_SETTINGS = 11403;
-    private static final float DEFAULT_LOCATION_ACCURACY = 100;
+    private static final float DEFAULT_DISTANCE_FILTER = 100;
+    private static final int DEFAULT_ACCURACY = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
 
-    private int mLocationPriority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
+    private int mLocationPriority = DEFAULT_ACCURACY;
     private long mUpdateInterval = 10 * 1000;  /* 10 secs */
     private long mFastestInterval = 5 * 1000; /* 5 sec */
     private double mMaximumAge = Double.POSITIVE_INFINITY;
     private long mTimeout = Long.MAX_VALUE;
-    private float mDistanceFilter = DEFAULT_LOCATION_ACCURACY;
+    private float mDistanceFilter = DEFAULT_DISTANCE_FILTER;
 
     private Callback mSuccessCallback;
     private Callback mErrorCallback;
@@ -129,16 +130,16 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
             return;
         }
 
-        mTimeout = options.hasKey("timeout") ? (long) options.getDouble("timeout") : mTimeout;
-        mMaximumAge = options.hasKey("maximumAge") ? options.getDouble("maximumAge") : mMaximumAge;
-        mDistanceFilter = options.hasKey("distanceFilter") ?
-            (float) options.getDouble("distanceFilter") : mDistanceFilter;
         boolean highAccuracy = options.hasKey("enableHighAccuracy") && options.getBoolean("enableHighAccuracy");
 
-        if (highAccuracy) {
-            // TODO: Make other PRIORITY_* constants availabe to the user
-            mLocationPriority = LocationRequest.PRIORITY_HIGH_ACCURACY;
-        }
+        // TODO: Make other PRIORITY_* constants availabe to the user
+        mLocationPriority = highAccuracy ? LocationRequest.PRIORITY_HIGH_ACCURACY : DEFAULT_ACCURACY;
+
+        mTimeout = options.hasKey("timeout") ? (long) options.getDouble("timeout") : Long.MAX_VALUE;
+        mMaximumAge = options.hasKey("maximumAge") ?
+            options.getDouble("maximumAge") : Double.POSITIVE_INFINITY;
+        mDistanceFilter = options.hasKey("distanceFilter") ?
+            (float) options.getDouble("distanceFilter") : DEFAULT_DISTANCE_FILTER;
 
         LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
 
