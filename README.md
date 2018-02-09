@@ -110,7 +110,7 @@ Checkout [React Native documentation](https://facebook.github.io/react-native/do
 - [ ] Implement `stopObserving` method for android
 
 # FAQ
-1. Location timeout still happening ?
+1. **Location timeout still happening ?**
 
     Try the following steps: (Taken from [here](https://support.strava.com/hc/en-us/articles/216918967-Troubleshooting-GPS-Issues))
     - Turn phone off/on
