@@ -4,6 +4,8 @@ React native geolocation service for iOS and android.
 # Why ?
 This library is created in an attempt to fix the location timeout issue on android with the react-native's current implementation of Geolocation API. This library tries to solve the issue by using Google Play Service's new `FusedLocationProviderClient` API, which Google strongly recommends over android's default framework location API. It automatically decides which provider to use based on your request configuration and also prompts you to change the location mode if it doesn't satisfy your current request configuration.
 
+> NOTE: Location request can still timeout since many android devices have GPS issue in the hardware level or in the system software level. Check the [FAQ](#faq) for more details.
+
 # Installation
 ```bash
 yarn add react-native-geolocation-service
@@ -106,3 +108,23 @@ Checkout [React Native documentation](https://facebook.github.io/react-native/do
 # TODO
 - [ ] Implement `watchPosition` & `clearWatch` methods for android
 - [ ] Implement `stopObserving` method for android
+
+# FAQ
+1. Location timeout still happening ?
+
+    Try the following steps: (Taken from [here](https://support.strava.com/hc/en-us/articles/216918967-Troubleshooting-GPS-Issues))
+    - Turn phone off/on
+    - Turn GPS off/on
+    - Disable any battery saver settings, including Power Saving Mode, Battery Management or any third party apps
+    - Perform an "AGPS reset": Install the App GPS Status & Toolbox, then in that app, go to Menu > Tools > Manage A-GPS State > Reset
+
+    Adjusting battery saver settings on different devices:
+
+    - HTC: Access your phone settings > battery > power saving mode > battery optimization > select your app > don't optimize > save
+    - Huawei: Turn Energy Settings to Normal and add your app to "Protected Apps"
+    - LG If you're running Android 6 or higher: Settings > battery & power saving > battery usage > ignore optimizations > turn ON for your app
+    - Motorola If you're running Android 6 or higher: Battery > select the menu in the upper right-hand corner > battery optimization > not optimized > all apps > select your app > don't optimize
+    - OnePlus (using OxygenOS Settings): Battery > battery optimization > switch to 'all apps' > select your app > don't optimize
+    - Samsung: Access battery settings > app power saving > details > your app > disabled
+    - Sony If you're running Android 6 or higher: Battery > from the menu in the upper right-hand corner > battery optimization > apps > your app
+    - Xiomi (MIUI OS) If you're running Android 6 or higher: Access your phone settings > additional settings > battery and performance > manage battery usage > apps > your app
