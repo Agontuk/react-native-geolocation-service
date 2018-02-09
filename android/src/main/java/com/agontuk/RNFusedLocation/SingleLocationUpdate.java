@@ -1,0 +1,109 @@
+package com.agontuk.RNFusedLocation;
+
+import android.location.Location;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+
+import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.WritableMap;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+
+public class SingleLocationUpdate {
+    private FusedLocationProviderClient mFusedProviderClient;
+    private LocationRequest mLocationRequest;
+    private long mTimeout;
+    private Callback mSuccessCallback;
+    private Callback mErrorCallback;
+
+    private final Handler mHandler = new Handler(Looper.getMainLooper());
+    private final Runnable mTimeoutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            synchronized (SingleLocationUpdate.this) {
+                invokeError(LocationError.TIMEOUT.getValue(), "Location request timed out.");
+
+                // Remove further location update.
+                if (mFusedProviderClient != null && mLocationCallback != null) {
+                    mFusedProviderClient.removeLocationUpdates(mLocationCallback);
+                }
+
+                Log.i(RNFusedLocationModule.TAG, "Location request timed out");
+            }
+        }
+    };
+
+    private final LocationCallback mLocationCallback = new LocationCallback() {
+        @Override
+        public void onLocationResult(LocationResult locationResult) {
+            synchronized (SingleLocationUpdate.this) {
+                Location location = locationResult.getLastLocation();
+                invokeSuccess(LocationUtils.locationToMap(location));
+
+                mHandler.removeCallbacks(mTimeoutRunnable);
+
+                // Remove further location update.
+                if (mFusedProviderClient != null && mLocationCallback != null) {
+                    mFusedProviderClient.removeLocationUpdates(mLocationCallback);
+                }
+            }
+        }
+    };
+
+    public SingleLocationUpdate(
+            FusedLocationProviderClient fusedLocationProviderClient,
+            LocationRequest locationRequest,
+            long timeout,
+            Callback success,
+            Callback error) {
+        mFusedProviderClient = fusedLocationProviderClient;
+        mLocationRequest = locationRequest;
+        mTimeout = timeout;
+        mSuccessCallback = success;
+        mErrorCallback = error;
+    }
+
+    /**
+     * Request one time location update
+     */
+    public void getLocation() {
+        if (mFusedProviderClient != null) {
+            mFusedProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.getMainLooper());
+            mHandler.postDelayed(mTimeoutRunnable, mTimeout);
+        }
+    }
+
+    /**
+     * Clear the JS callbacks
+     */
+    private void clearCallbacks() {
+        mSuccessCallback = null;
+        mErrorCallback = null;
+    }
+
+    /**
+     * Helper method to invoke success callback
+     */
+    private void invokeSuccess(WritableMap data) {
+        if (mSuccessCallback != null) {
+            mSuccessCallback.invoke(data);
+        }
+
+        clearCallbacks();
+    }
+
+    /**
+     * Helper method to invoke error callback
+     */
+    private void invokeError(int code, String message) {
+        if (mErrorCallback != null) {
+            mErrorCallback.invoke(LocationUtils.buildError(code, message));
+        }
+
+        clearCallbacks();
+    }
+}

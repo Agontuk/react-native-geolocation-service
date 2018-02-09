@@ -4,8 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.location.Location;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 
 import com.facebook.react.bridge.ActivityEventListener;
@@ -21,18 +19,17 @@ import com.facebook.react.common.SystemClock;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 public class RNFusedLocationModule extends ReactContextBaseJavaModule {
-    private static final String TAG = "RNFusedLocation";
+    public static final String TAG = "RNFusedLocation";
     private static final int REQUEST_CHECK_SETTINGS = 11403;
     private static final float DEFAULT_DISTANCE_FILTER = 100;
     private static final int DEFAULT_ACCURACY = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
@@ -47,22 +44,8 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     private Callback mSuccessCallback;
     private Callback mErrorCallback;
     private FusedLocationProviderClient mFusedProviderClient;
+    private SettingsClient mSettingsClient;
     private LocationRequest mLocationRequest;
-
-    private final Handler mHandler = new Handler(Looper.getMainLooper());
-    private final Runnable mTimeoutRunnable = new Runnable() {
-        @Override
-        public synchronized void run() {
-            invokeError(LocationError.TIMEOUT.getValue(), "Location request timed out.");
-
-            // Remove further location update.
-            if (mFusedProviderClient != null && mLocationCallback != null) {
-                mFusedProviderClient.removeLocationUpdates(mLocationCallback);
-            }
-
-            Log.i(TAG, "Location request timed out");
-        }
-    };
 
     private final ActivityEventListener mActivityEventListener = new BaseActivityEventListener() {
         @Override
@@ -81,18 +64,11 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         }
     };
 
-    private final LocationCallback mLocationCallback = new LocationCallback() {
-        @Override
-        public void onLocationResult(LocationResult locationResult) {
-            Location location = locationResult.getLastLocation();
-            onLocationChanged(location);
-        }
-    };
-
     public RNFusedLocationModule(ReactApplicationContext reactContext) {
         super(reactContext);
 
         mFusedProviderClient = LocationServices.getFusedLocationProviderClient(reactContext);
+        mSettingsClient = LocationServices.getSettingsClient(reactContext);
         reactContext.addActivityEventListener(mActivityEventListener);
 
         Log.i(TAG, TAG + " initialized");
@@ -143,14 +119,15 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
 
         LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
 
-        LocationServices.getSettingsClient(context)
-            .checkLocationSettings(locationSettingsRequest)
-            .addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
-                @Override
-                public void onComplete(Task<LocationSettingsResponse> task) {
-                    onLocationSettingsResponse(task);
-                }
-            });
+        if (mSettingsClient != null) {
+            mSettingsClient.checkLocationSettings(locationSettingsRequest)
+                .addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+                    @Override
+                    public void onComplete(Task<LocationSettingsResponse> task) {
+                        onLocationSettingsResponse(task);
+                    }
+                });
+        }
     }
 
     /**
@@ -233,33 +210,15 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                     }
 
                     // Last location is not available, request location update.
-                    requestLocationUpdates();
+                    new SingleLocationUpdate(
+                        mFusedProviderClient,
+                        mLocationRequest,
+                        mTimeout,
+                        mSuccessCallback,
+                        mErrorCallback
+                    ).getLocation();
                 }
             });
-        }
-    }
-
-    /**
-     * Request new location update for one time and remove updates after result is returned.
-     */
-    private void requestLocationUpdates() {
-        if (mFusedProviderClient != null) {
-            mFusedProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.getMainLooper());
-            mHandler.postDelayed(mTimeoutRunnable, mTimeout);
-        }
-    }
-
-    /**
-     * Handle new location updates
-     */
-    private synchronized void onLocationChanged(Location location) {
-        invokeSuccess(LocationUtils.locationToMap(location));
-
-        mHandler.removeCallbacks(mTimeoutRunnable);
-
-        // Remove further location update.
-        if (mFusedProviderClient != null && mLocationCallback != null) {
-            mFusedProviderClient.removeLocationUpdates(mLocationCallback);
         }
     }
 
