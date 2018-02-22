@@ -114,8 +114,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         mTimeout = options.hasKey("timeout") ? (long) options.getDouble("timeout") : Long.MAX_VALUE;
         mMaximumAge = options.hasKey("maximumAge") ?
             options.getDouble("maximumAge") : Double.POSITIVE_INFINITY;
-        mDistanceFilter = options.hasKey("distanceFilter") ?
-            (float) options.getDouble("distanceFilter") : DEFAULT_DISTANCE_FILTER;
+        mDistanceFilter = options.hasKey("distanceFilter") ? (float) options.getDouble("distanceFilter") : 0;
 
         LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
 
