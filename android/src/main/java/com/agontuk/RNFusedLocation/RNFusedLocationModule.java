@@ -166,14 +166,18 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                      * TODO: we may want to make it optional & just say that settings are not ok.
                      */
                     try {
-                        // Cast to a resolvable exception.
                         ResolvableApiException resolvable = (ResolvableApiException) exception;
-                        // Show the dialog by calling startResolutionForResult(),
-                        // and check the result in onActivityResult().
-                        resolvable.startResolutionForResult(
-                            getActivity(),
-                            REQUEST_CHECK_SETTINGS
-                        );
+                        Activity activity = getCurrentActivity();
+
+                        if (activity == null) {
+                            invokeError(
+                                LocationError.INTERNAL_ERROR.getValue(),
+                                "Tried to open location dialog while not attached to an Activity"
+                            );
+                            return;
+                        }
+
+                        resolvable.startResolutionForResult(activity, REQUEST_CHECK_SETTINGS);
                     } catch (SendIntentException e) {
                         invokeError(LocationError.INTERNAL_ERROR.getValue(), "Internal error occurred");
                     } catch (ClassCastException e) {
@@ -226,13 +230,6 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
      */
     private ReactApplicationContext getContext() {
         return getReactApplicationContext();
-    }
-
-    /**
-     * Get the current activity
-     */
-    private Activity getActivity() {
-        return getCurrentActivity();
     }
 
     /**
