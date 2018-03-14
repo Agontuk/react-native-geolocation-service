@@ -103,7 +103,7 @@ Checkout [React Native documentation](https://facebook.github.io/react-native/do
 | TIMEOUT | 3 | Location request timed out |
 | PLAY_SERVICE_NOT_AVAILABLE | 4 | Google play service is not installed or has an older version |
 | SETTINGS_NOT_SATISFIED | 5 | Location service is not enabled or location mode is not appropriate for the current request |
-| INTERNAL_ERROR | -1 | Library crashed for some reason |
+| INTERNAL_ERROR | -1 | Library crashed for some reason or the `getCurrentActivity()` returned null |
 
 # TODO
 - [ ] Implement `watchPosition` & `clearWatch` methods for android
