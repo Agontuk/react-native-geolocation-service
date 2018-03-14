@@ -14,11 +14,11 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 
 public class SingleLocationUpdate {
-    private FusedLocationProviderClient mFusedProviderClient;
-    private LocationRequest mLocationRequest;
-    private long mTimeout;
-    private Callback mSuccessCallback;
-    private Callback mErrorCallback;
+    private final FusedLocationProviderClient mFusedProviderClient;
+    private final LocationRequest mLocationRequest;
+    private final long mTimeout;
+    private final Callback mSuccessCallback;
+    private final Callback mErrorCallback;
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private final Runnable mTimeoutRunnable = new Runnable() {
@@ -78,22 +78,12 @@ public class SingleLocationUpdate {
     }
 
     /**
-     * Clear the JS callbacks
-     */
-    private void clearCallbacks() {
-        mSuccessCallback = null;
-        mErrorCallback = null;
-    }
-
-    /**
      * Helper method to invoke success callback
      */
     private void invokeSuccess(WritableMap data) {
         if (mSuccessCallback != null) {
             mSuccessCallback.invoke(data);
         }
-
-        clearCallbacks();
     }
 
     /**
@@ -103,7 +93,5 @@ public class SingleLocationUpdate {
         if (mErrorCallback != null) {
             mErrorCallback.invoke(LocationUtils.buildError(code, message));
         }
-
-        clearCallbacks();
     }
 }
