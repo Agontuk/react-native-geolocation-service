@@ -28,6 +28,8 @@ import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import java.lang.RuntimeException;
+
 public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     public static final String TAG = "RNFusedLocation";
     private static final int REQUEST_CHECK_SETTINGS = 11403;
@@ -244,21 +246,31 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
      * Helper method to invoke success callback
      */
     private void invokeSuccess(WritableMap data) {
-        if (mSuccessCallback != null) {
-            mSuccessCallback.invoke(data);
-        }
+        try {
+            if (mSuccessCallback != null) {
+                mSuccessCallback.invoke(data);
+            }
 
-        clearCallbacks();
+            clearCallbacks();
+        } catch (RuntimeException e) {
+            // Illegal callback invocation
+            Log.w(TAG, e.getMessage());
+        }
     }
 
     /**
      * Helper method to invoke error callback
      */
     private void invokeError(int code, String message) {
-        if (mErrorCallback != null) {
-            mErrorCallback.invoke(LocationUtils.buildError(code, message));
-        }
+        try {
+            if (mErrorCallback != null) {
+                mErrorCallback.invoke(LocationUtils.buildError(code, message));
+            }
 
-        clearCallbacks();
+            clearCallbacks();
+        } catch (RuntimeException e) {
+            // Illegal callback invocation
+            Log.w(TAG, e.getMessage());
+        }
     }
 }

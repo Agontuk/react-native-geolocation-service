@@ -13,6 +13,8 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 
+import java.lang.RuntimeException;
+
 public class SingleLocationUpdate {
     private final FusedLocationProviderClient mFusedProviderClient;
     private final LocationRequest mLocationRequest;
@@ -81,8 +83,13 @@ public class SingleLocationUpdate {
      * Helper method to invoke success callback
      */
     private void invokeSuccess(WritableMap data) {
-        if (mSuccessCallback != null) {
-            mSuccessCallback.invoke(data);
+        try {
+            if (mSuccessCallback != null) {
+                mSuccessCallback.invoke(data);
+            }
+        } catch (RuntimeException e) {
+            // Illegal callback invocation
+            Log.w(RNFusedLocationModule.TAG, e.getMessage());
         }
     }
 
@@ -90,8 +97,13 @@ public class SingleLocationUpdate {
      * Helper method to invoke error callback
      */
     private void invokeError(int code, String message) {
-        if (mErrorCallback != null) {
-            mErrorCallback.invoke(LocationUtils.buildError(code, message));
+        try {
+            if (mErrorCallback != null) {
+                mErrorCallback.invoke(LocationUtils.buildError(code, message));
+            }
+        } catch (RuntimeException e) {
+            // Illegal callback invocation
+            Log.w(RNFusedLocationModule.TAG, e.getMessage());
         }
     }
 }
