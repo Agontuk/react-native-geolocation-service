@@ -27,7 +27,6 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-
 import java.lang.RuntimeException;
 
 public class RNFusedLocationModule extends ReactContextBaseJavaModule {
@@ -36,6 +35,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     private static final float DEFAULT_DISTANCE_FILTER = 100;
     private static final int DEFAULT_ACCURACY = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
 
+    private boolean mShowLocationDialog = true;
     private int mLocationPriority = DEFAULT_ACCURACY;
     private long mUpdateInterval = 10 * 1000;  /* 10 secs */
     private long mFastestInterval = 5 * 1000; /* 5 sec */
@@ -117,6 +117,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         mMaximumAge = options.hasKey("maximumAge") ?
             options.getDouble("maximumAge") : Double.POSITIVE_INFINITY;
         mDistanceFilter = options.hasKey("distanceFilter") ? (float) options.getDouble("distanceFilter") : 0;
+        mShowLocationDialog = options.hasKey("showLocationDialog") ? options.getBoolean("showLocationDialog") : true;
 
         LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
 
@@ -167,6 +168,14 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                      *
                      * TODO: we may want to make it optional & just say that settings are not ok.
                      */
+                    if(!mShowLocationDialog) {
+                        invokeError(
+                            LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                            "Location settings are not satisfied."
+                        );
+                        break;
+                    }
+
                     try {
                         ResolvableApiException resolvable = (ResolvableApiException) exception;
                         Activity activity = getCurrentActivity();
