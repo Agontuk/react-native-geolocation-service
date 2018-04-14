@@ -27,6 +27,7 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+
 import java.lang.RuntimeException;
 
 public class RNFusedLocationModule extends ReactContextBaseJavaModule {
@@ -86,7 +87,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
      * request an update, which might take a while.
      *
      * @param options map containing optional arguments: timeout (millis), maximumAge (millis),
-     *        highAccuracy (boolean) and distanceFilter
+     *        highAccuracy (boolean), distanceFilter (double) and showLocationDialog (boolean)
      * @param success success callback
      * @param error error callback
      */
@@ -165,8 +166,6 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                      * Location settings are not satisfied. But could be fixed by showing the
                      * user a dialog. It means either location serivce is not enabled or
                      * default location mode is not enough to perform the request.
-                     *
-                     * TODO: we may want to make it optional & just say that settings are not ok.
                      */
                     if(!mShowLocationDialog) {
                         invokeError(
@@ -185,7 +184,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                                 LocationError.INTERNAL_ERROR.getValue(),
                                 "Tried to open location dialog while not attached to an Activity"
                             );
-                            return;
+                            break;
                         }
 
                         resolvable.startResolutionForResult(activity, REQUEST_CHECK_SETTINGS);
