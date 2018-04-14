@@ -92,6 +92,18 @@ componentDidMount() {
     }
 }
 ```
+
+# API
+#### `getCurrentPosition(successCallback, errorCallback, options)`
+ - **successCallback**: Invoked with latest location info.
+ - **errorCallback**: Invoked whenever an error is encountered.
+ - **options**:
+   - timeout (ms)
+   - maximumAge (ms)
+   - enableHighAccuracy (bool)
+   - distanceFilter (double)
+   - showLocationDialog (whether to ask to enable location in Android)
+
 Checkout [React Native documentation](https://facebook.github.io/react-native/docs/geolocation.html#reference) to see the list of available methods.
 
 
