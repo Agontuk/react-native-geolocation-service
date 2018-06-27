@@ -15,11 +15,14 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.SystemClock;
+import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
@@ -49,6 +52,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     private FusedLocationProviderClient mFusedProviderClient;
     private SettingsClient mSettingsClient;
     private LocationRequest mLocationRequest;
+    private LocationCallback mLocationCallback;
 
     private final ActivityEventListener mActivityEventListener = new BaseActivityEventListener() {
         @Override
@@ -127,9 +131,60 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                 .addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
                     @Override
                     public void onComplete(Task<LocationSettingsResponse> task) {
-                        onLocationSettingsResponse(task);
+                        onLocationSettingsResponse(task, true);
                     }
                 });
+        }
+    }
+
+    /**
+     * Start listening for location updates. These will be emitted via the
+     * {@link RCTDeviceEventEmitter} as {@code geolocationDidChange} events.
+     *
+     * @param options map containing optional arguments: highAccuracy (boolean), distanceFilter (double)
+     */
+    @ReactMethod
+    public void startObserving(ReadableMap options) {
+        ReactApplicationContext context = getContext();
+
+        if (!LocationUtils.hasLocationPermission(context)) {
+            emitError(LocationError.PERMISSION_DENIED.getValue(), "Location permission not granted.");
+            return;
+        }
+
+        if (!LocationUtils.isGooglePlayServicesAvailable(context)) {
+            emitError(LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
+                "Google play service is not available.");
+            return;
+        }
+
+        boolean highAccuracy = options.hasKey("enableHighAccuracy") && options.getBoolean("enableHighAccuracy");
+
+        // TODO: Make other PRIORITY_* constants availabe to the user
+        mLocationPriority = highAccuracy ? LocationRequest.PRIORITY_HIGH_ACCURACY : DEFAULT_ACCURACY;
+        mDistanceFilter = options.hasKey("distanceFilter") ? (float) options.getDouble("distanceFilter") : DEFAULT_DISTANCE_FILTER;
+
+        LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
+
+        if (mSettingsClient != null) {
+            mSettingsClient.checkLocationSettings(locationSettingsRequest)
+                .addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+                    @Override
+                    public void onComplete(Task<LocationSettingsResponse> task) {
+                        onLocationSettingsResponse(task, false);
+                    }
+                });
+        }
+    }
+
+    /**
+     * Stop listening for location updates.
+     */
+    @ReactMethod
+    public void stopObserving() {
+        if (mFusedProviderClient != null && mLocationCallback != null) {
+            mFusedProviderClient.removeLocationUpdates(mLocationCallback);
+            mLocationCallback = null;
         }
     }
 
@@ -154,12 +209,23 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
      * Check location setting response and decide whether to proceed with
      * location request or not.
      */
-    private void onLocationSettingsResponse(Task<LocationSettingsResponse> task) {
+    private void onLocationSettingsResponse(Task<LocationSettingsResponse> task, boolean isSingleUpdate) {
         try {
             LocationSettingsResponse response = task.getResult(ApiException.class);
             // All location settings are satisfied, start location request.
-            getUserLocation();
+            if (isSingleUpdate) {
+                getUserLocation();
+            } else {
+                getLocationUpdates();
+            }
         } catch (ApiException exception) {
+            if (!isSingleUpdate) {
+                emitError(LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                    "Location settings are not satisfied.");
+
+                return;
+            }
+
             switch (exception.getStatusCode()) {
                 case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                     /**
@@ -236,6 +302,23 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     }
 
     /**
+     * Get periodic location updates based on the current location request.
+     */
+    private void getLocationUpdates() {
+        if (mFusedProviderClient != null && mLocationRequest != null) {
+            mLocationCallback = new LocationCallback() {
+                @Override
+                public void onLocationResult(LocationResult locationResult) {
+                    Location location = locationResult.getLastLocation();
+                    emitSuccess(LocationUtils.locationToMap(location));
+                }
+            };
+
+            mFusedProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallback, null);
+        }
+    }
+
+    /**
      * Get react context
      */
     private ReactApplicationContext getContext() {
@@ -280,5 +363,21 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
             // Illegal callback invocation
             Log.w(TAG, e.getMessage());
         }
+    }
+
+    /**
+     * Helper method to emit new location data
+     */
+    private void emitSuccess(WritableMap data) {
+        getContext().getJSModule(RCTDeviceEventEmitter.class)
+          .emit("geolocationDidChange", data);
+    }
+
+    /**
+     * Helper method to emit error
+     */
+    private void emitError(int code, String message) {
+        getContext().getJSModule(RCTDeviceEventEmitter.class)
+            .emit("geolocationError", LocationUtils.buildError(code, message));
     }
 }
