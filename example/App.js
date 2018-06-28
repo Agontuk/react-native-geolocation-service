@@ -87,7 +87,7 @@ export default class App extends Component<{}> {
           this.setState({ location: error });
           console.log(error);
         },
-        { enableHighAccuracy: true, distanceFilter: 0 }
+        { enableHighAccuracy: true, distanceFilter: 0, interval: 5000, fastestInterval: 2000 }
       );
     });
   }

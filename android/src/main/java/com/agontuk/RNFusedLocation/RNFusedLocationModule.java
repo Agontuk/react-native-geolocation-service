@@ -38,11 +38,13 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     private static final int REQUEST_CHECK_SETTINGS = 11403;
     private static final float DEFAULT_DISTANCE_FILTER = 100;
     private static final int DEFAULT_ACCURACY = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
+    private static final long DEFAULT_INTERVAL = 10 * 1000;  /* 10 secs */;
+    private static final long DEFAULT_FASTEST_INTERVAL = 5 * 1000; /* 5 sec */;
 
     private boolean mShowLocationDialog = true;
     private int mLocationPriority = DEFAULT_ACCURACY;
-    private long mUpdateInterval = 10 * 1000;  /* 10 secs */
-    private long mFastestInterval = 5 * 1000; /* 5 sec */
+    private long mUpdateInterval = DEFAULT_INTERVAL;
+    private long mFastestInterval = DEFAULT_FASTEST_INTERVAL;
     private double mMaximumAge = Double.POSITIVE_INFINITY;
     private long mTimeout = Long.MAX_VALUE;
     private float mDistanceFilter = DEFAULT_DISTANCE_FILTER;
@@ -123,16 +125,22 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
             return;
         }
 
-        boolean highAccuracy = options.hasKey("enableHighAccuracy") && options.getBoolean("enableHighAccuracy");
+        boolean highAccuracy = options.hasKey("enableHighAccuracy") &&
+            options.getBoolean("enableHighAccuracy");
 
         // TODO: Make other PRIORITY_* constants availabe to the user
         mLocationPriority = highAccuracy ? LocationRequest.PRIORITY_HIGH_ACCURACY : DEFAULT_ACCURACY;
 
         mTimeout = options.hasKey("timeout") ? (long) options.getDouble("timeout") : Long.MAX_VALUE;
-        mMaximumAge = options.hasKey("maximumAge") ?
-            options.getDouble("maximumAge") : Double.POSITIVE_INFINITY;
-        mDistanceFilter = options.hasKey("distanceFilter") ? (float) options.getDouble("distanceFilter") : 0;
-        mShowLocationDialog = options.hasKey("showLocationDialog") ? options.getBoolean("showLocationDialog") : true;
+        mMaximumAge = options.hasKey("maximumAge")
+            ? options.getDouble("maximumAge")
+            : Double.POSITIVE_INFINITY;
+        mDistanceFilter = options.hasKey("distanceFilter")
+            ? (float) options.getDouble("distanceFilter")
+            : 0;
+        mShowLocationDialog = options.hasKey("showLocationDialog")
+            ? options.getBoolean("showLocationDialog")
+            : true;
 
         LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
 
@@ -151,7 +159,8 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
      * Start listening for location updates. These will be emitted via the
      * {@link RCTDeviceEventEmitter} as {@code geolocationDidChange} events.
      *
-     * @param options map containing optional arguments: highAccuracy (boolean), distanceFilter (double)
+     * @param options map containing optional arguments: highAccuracy (boolean), distanceFilter (double),
+     *        interval (millis), fastestInterval (millis)
      */
     @ReactMethod
     public void startObserving(ReadableMap options) {
@@ -175,11 +184,20 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
             return;
         }
 
-        boolean highAccuracy = options.hasKey("enableHighAccuracy") && options.getBoolean("enableHighAccuracy");
+        boolean highAccuracy = options.hasKey("enableHighAccuracy")
+            && options.getBoolean("enableHighAccuracy");
 
         // TODO: Make other PRIORITY_* constants availabe to the user
         mLocationPriority = highAccuracy ? LocationRequest.PRIORITY_HIGH_ACCURACY : DEFAULT_ACCURACY;
-        mDistanceFilter = options.hasKey("distanceFilter") ? (float) options.getDouble("distanceFilter") : DEFAULT_DISTANCE_FILTER;
+        mDistanceFilter = options.hasKey("distanceFilter")
+            ? (float) options.getDouble("distanceFilter")
+            : DEFAULT_DISTANCE_FILTER;
+        mUpdateInterval = options.hasKey("interval")
+            ? (long) options.getDouble("interval")
+            : DEFAULT_INTERVAL;
+        mFastestInterval = options.hasKey("fastestInterval")
+            ? (long) options.getDouble("fastestInterval")
+            : DEFAULT_INTERVAL;
 
         LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
 
@@ -226,7 +244,10 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
      * Check location setting response and decide whether to proceed with
      * location request or not.
      */
-    private void onLocationSettingsResponse(Task<LocationSettingsResponse> task, boolean isSingleUpdate) {
+    private void onLocationSettingsResponse(
+        Task<LocationSettingsResponse> task,
+        boolean isSingleUpdate
+    ) {
         try {
             LocationSettingsResponse response = task.getResult(ApiException.class);
             // All location settings are satisfied, start location request.
