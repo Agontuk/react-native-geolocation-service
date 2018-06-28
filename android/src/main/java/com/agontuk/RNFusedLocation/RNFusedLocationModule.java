@@ -61,8 +61,11 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                 if (resultCode == Activity.RESULT_CANCELED) {
                     // User cancelled the request.
                     // TODO: allow user to ignore this & request location.
-                    invokeError(LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                        "Location settings are not satisfied.");
+                    invokeError(
+                        LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                        "Location settings are not satisfied.",
+                        true
+                    );
                 } else if (resultCode == Activity.RESULT_OK) {
                     // Location settings changed successfully, request user location.
                     getUserLocation();
@@ -103,13 +106,20 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         mErrorCallback = error;
 
         if (!LocationUtils.hasLocationPermission(context)) {
-            invokeError(LocationError.PERMISSION_DENIED.getValue(), "Location permission not granted.");
+            invokeError(
+                LocationError.PERMISSION_DENIED.getValue(),
+                "Location permission not granted.",
+                true
+            );
             return;
         }
 
         if (!LocationUtils.isGooglePlayServicesAvailable(context)) {
-            invokeError(LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
-                "Google play service is not available.");
+            invokeError(
+                LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
+                "Google play service is not available.",
+                true
+            );
             return;
         }
 
@@ -148,13 +158,20 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         ReactApplicationContext context = getContext();
 
         if (!LocationUtils.hasLocationPermission(context)) {
-            emitError(LocationError.PERMISSION_DENIED.getValue(), "Location permission not granted.");
+            invokeError(
+                LocationError.PERMISSION_DENIED.getValue(),
+                "Location permission not granted.",
+                false
+            );
             return;
         }
 
         if (!LocationUtils.isGooglePlayServicesAvailable(context)) {
-            emitError(LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
-                "Google play service is not available.");
+            invokeError(
+                LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
+                "Google play service is not available.",
+                false
+            );
             return;
         }
 
@@ -220,9 +237,11 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
             }
         } catch (ApiException exception) {
             if (!isSingleUpdate) {
-                emitError(LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                    "Location settings are not satisfied.");
-
+                invokeError(
+                    LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                    "Location settings are not satisfied.",
+                    false
+                );
                 return;
             }
 
@@ -236,7 +255,8 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                     if(!mShowLocationDialog) {
                         invokeError(
                             LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                            "Location settings are not satisfied."
+                            "Location settings are not satisfied.",
+                            true
                         );
                         break;
                     }
@@ -248,24 +268,36 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                         if (activity == null) {
                             invokeError(
                                 LocationError.INTERNAL_ERROR.getValue(),
-                                "Tried to open location dialog while not attached to an Activity"
+                                "Tried to open location dialog while not attached to an Activity",
+                                true
                             );
                             break;
                         }
 
                         resolvable.startResolutionForResult(activity, REQUEST_CHECK_SETTINGS);
                     } catch (SendIntentException e) {
-                        invokeError(LocationError.INTERNAL_ERROR.getValue(), "Internal error occurred");
+                        invokeError(
+                            LocationError.INTERNAL_ERROR.getValue(),
+                            "Internal error occurred",
+                            true
+                        );
                     } catch (ClassCastException e) {
-                        invokeError(LocationError.INTERNAL_ERROR.getValue(), "Internal error occurred");
+                        invokeError(
+                            LocationError.INTERNAL_ERROR.getValue(),
+                            "Internal error occurred",
+                            true
+                        );
                     }
 
                     break;
                 default:
                     // TODO: we may have to handle other use case here.
                     // For now just say that settings are not ok.
-                    invokeError(LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                        "Location settings are not satisfied.");
+                    invokeError(
+                        LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                        "Location settings are not satisfied.",
+                        true
+                    );
 
                     break;
             }
@@ -284,7 +316,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
 
                     if (location != null &&
                             (SystemClock.currentTimeMillis() - location.getTime()) < mMaximumAge) {
-                        invokeSuccess(LocationUtils.locationToMap(location));
+                        invokeSuccess(LocationUtils.locationToMap(location), true);
                         return;
                     }
 
@@ -310,7 +342,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                 @Override
                 public void onLocationResult(LocationResult locationResult) {
                     Location location = locationResult.getLastLocation();
-                    emitSuccess(LocationUtils.locationToMap(location));
+                    invokeSuccess(LocationUtils.locationToMap(location), false);
                 }
             };
 
@@ -336,7 +368,14 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     /**
      * Helper method to invoke success callback
      */
-    private void invokeSuccess(WritableMap data) {
+    private void invokeSuccess(WritableMap data, boolean isSingleUpdate) {
+        if (!isSingleUpdate) {
+            getContext().getJSModule(RCTDeviceEventEmitter.class)
+                .emit("geolocationDidChange", data);
+
+            return;
+        }
+
         try {
             if (mSuccessCallback != null) {
                 mSuccessCallback.invoke(data);
@@ -352,7 +391,14 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     /**
      * Helper method to invoke error callback
      */
-    private void invokeError(int code, String message) {
+    private void invokeError(int code, String message, boolean isSingleUpdate) {
+        if (!isSingleUpdate) {
+            getContext().getJSModule(RCTDeviceEventEmitter.class)
+                .emit("geolocationError", LocationUtils.buildError(code, message));
+
+            return;
+        }
+
         try {
             if (mErrorCallback != null) {
                 mErrorCallback.invoke(LocationUtils.buildError(code, message));
@@ -363,21 +409,5 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
             // Illegal callback invocation
             Log.w(TAG, e.getMessage());
         }
-    }
-
-    /**
-     * Helper method to emit new location data
-     */
-    private void emitSuccess(WritableMap data) {
-        getContext().getJSModule(RCTDeviceEventEmitter.class)
-          .emit("geolocationDidChange", data);
-    }
-
-    /**
-     * Helper method to emit error
-     */
-    private void emitError(int code, String message) {
-        getContext().getJSModule(RCTDeviceEventEmitter.class)
-            .emit("geolocationError", LocationUtils.buildError(code, message));
     }
 }
