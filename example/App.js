@@ -17,8 +17,11 @@ import {
 import Geolocation from 'react-native-geolocation-service';
 
 export default class App extends Component<{}> {
+  watchId = null;
+
   state = {
     loading: false,
+    updatesEnabled: false,
     location: {}
   };
 
@@ -69,11 +72,45 @@ export default class App extends Component<{}> {
     });
   }
 
+  getLocationUpdates = async () => {
+    const hasLocationPermission = await this.hasLocationPermission();
+
+    if (!hasLocationPermission) return;
+
+    this.setState({ updatesEnabled: true }, () => {
+      this.watchId = Geolocation.watchPosition(
+        (position) => {
+          this.setState({ location: position });
+          console.log(position);
+        },
+        (error) => {
+          this.setState({ location: error });
+          console.log(error);
+        },
+        { enableHighAccuracy: true, distanceFilter: 0 }
+      );
+    });
+  }
+
+  removeLocationUpdates = () => {
+      if (this.watchId !== null) {
+          Geolocation.clearWatch(this.watchId);
+          this.setState({ updatesEnabled: false })
+      }
+  }
+
   render() {
     return (
       <View style={styles.container}>
         <Button title='Get Location' onPress={this.getLocation} disabled={this.state.loading} />
-        <Text>{JSON.stringify(this.state.location, null, 4)}</Text>
+        <View style={styles.buttons}>
+            <Button title='Start Observing' onPress={this.getLocationUpdates} disabled={this.state.updatesEnabled} />
+            <Button title='Stop Observing' onPress={this.removeLocationUpdates} disabled={!this.state.updatesEnabled} />
+        </View>
+
+        <View style={styles.result}>
+            <Text>{JSON.stringify(this.state.location, null, 4)}</Text>
+        </View>
       </View>
     );
   }
@@ -85,5 +122,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
+    paddingHorizontal: 12
+  },
+  result: {
+      borderWidth: 1,
+      borderColor: '#666',
+      width: '100%',
+      paddingHorizontal: 16
+  },
+  buttons: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      marginVertical: 12,
+      width: '100%'
   }
 });
