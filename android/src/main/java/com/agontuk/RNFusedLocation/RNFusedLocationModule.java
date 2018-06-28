@@ -35,7 +35,8 @@ import java.lang.RuntimeException;
 
 public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     public static final String TAG = "RNFusedLocation";
-    private static final int REQUEST_CHECK_SETTINGS = 11403;
+    private static final int REQUEST_SETTINGS_SINGLE_UPDATE = 11403;
+    private static final int REQUEST_SETTINGS_CONTINUOUS_UPDATE = 11404;
     private static final float DEFAULT_DISTANCE_FILTER = 100;
     private static final int DEFAULT_ACCURACY = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
     private static final long DEFAULT_INTERVAL = 10 * 1000;  /* 10 secs */;
@@ -59,7 +60,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     private final ActivityEventListener mActivityEventListener = new BaseActivityEventListener() {
         @Override
         public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent intent) {
-            if (requestCode == REQUEST_CHECK_SETTINGS) {
+            if (requestCode == REQUEST_SETTINGS_SINGLE_UPDATE) {
                 if (resultCode == Activity.RESULT_CANCELED) {
                     // User cancelled the request.
                     // TODO: allow user to ignore this & request location.
@@ -71,6 +72,19 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                 } else if (resultCode == Activity.RESULT_OK) {
                     // Location settings changed successfully, request user location.
                     getUserLocation();
+                }
+            } else if (requestCode == REQUEST_SETTINGS_CONTINUOUS_UPDATE) {
+                if (resultCode == Activity.RESULT_CANCELED) {
+                    // User cancelled the request.
+                    // TODO: allow user to ignore this & request location.
+                    invokeError(
+                        LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                        "Location settings are not satisfied.",
+                        false
+                    );
+                } else if (resultCode == Activity.RESULT_OK) {
+                    // Location settings changed successfully, request user location.
+                    getLocationUpdates();
                 }
             }
         }
@@ -198,6 +212,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         mFastestInterval = options.hasKey("fastestInterval")
             ? (long) options.getDouble("fastestInterval")
             : DEFAULT_INTERVAL;
+        mShowLocationDialog = options.hasKey("showLocationDialog")
+            ? options.getBoolean("showLocationDialog")
+            : true;
 
         LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
 
@@ -257,15 +274,6 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                 getLocationUpdates();
             }
         } catch (ApiException exception) {
-            if (!isSingleUpdate) {
-                invokeError(
-                    LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                    "Location settings are not satisfied.",
-                    false
-                );
-                return;
-            }
-
             switch (exception.getStatusCode()) {
                 case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                     /**
@@ -277,7 +285,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                         invokeError(
                             LocationError.SETTINGS_NOT_SATISFIED.getValue(),
                             "Location settings are not satisfied.",
-                            true
+                            isSingleUpdate
                         );
                         break;
                     }
@@ -290,23 +298,26 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                             invokeError(
                                 LocationError.INTERNAL_ERROR.getValue(),
                                 "Tried to open location dialog while not attached to an Activity",
-                                true
+                                isSingleUpdate
                             );
                             break;
                         }
 
-                        resolvable.startResolutionForResult(activity, REQUEST_CHECK_SETTINGS);
+                        resolvable.startResolutionForResult(
+                            activity,
+                            isSingleUpdate ? REQUEST_SETTINGS_SINGLE_UPDATE : REQUEST_SETTINGS_CONTINUOUS_UPDATE
+                        );
                     } catch (SendIntentException e) {
                         invokeError(
                             LocationError.INTERNAL_ERROR.getValue(),
                             "Internal error occurred",
-                            true
+                            isSingleUpdate
                         );
                     } catch (ClassCastException e) {
                         invokeError(
                             LocationError.INTERNAL_ERROR.getValue(),
                             "Internal error occurred",
-                            true
+                            isSingleUpdate
                         );
                     }
 
@@ -317,7 +328,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                     invokeError(
                         LocationError.SETTINGS_NOT_SATISFIED.getValue(),
                         "Location settings are not satisfied.",
-                        true
+                        isSingleUpdate
                     );
 
                     break;

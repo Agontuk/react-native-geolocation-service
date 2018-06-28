@@ -100,16 +100,17 @@ export default class App extends Component<{}> {
   }
 
   render() {
+    const { loading, location, updatesEnabled } = this.state;
     return (
       <View style={styles.container}>
-        <Button title='Get Location' onPress={this.getLocation} disabled={this.state.loading} />
+        <Button title='Get Location' onPress={this.getLocation} disabled={loading || updatesEnabled} />
         <View style={styles.buttons}>
-            <Button title='Start Observing' onPress={this.getLocationUpdates} disabled={this.state.updatesEnabled} />
-            <Button title='Stop Observing' onPress={this.removeLocationUpdates} disabled={!this.state.updatesEnabled} />
+            <Button title='Start Observing' onPress={this.getLocationUpdates} disabled={updatesEnabled} />
+            <Button title='Stop Observing' onPress={this.removeLocationUpdates} disabled={!updatesEnabled} />
         </View>
 
         <View style={styles.result}>
-            <Text>{JSON.stringify(this.state.location, null, 4)}</Text>
+            <Text>{JSON.stringify(location, null, 4)}</Text>
         </View>
       </View>
     );
