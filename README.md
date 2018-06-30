@@ -27,7 +27,25 @@ No additional setup is required, since it uses the React Native's default Geoloc
     }
     ```
 
-    If you have a different play service version than the one included in this library, use the following instead. But play service version should be `11+` or the library won't work.
+    If you've defined [project-wide properties](https://developer.android.com/studio/build/gradle-tips#configure-project-wide-properties) (recommended) in your root build.gradle, this library will detect the presence of the following properties:
+
+    ```gradle
+    buildscript {...}
+    allprojects {...}
+
+    /**
+     + Project-wide Gradle configuration properties
+     */
+    ext {
+        compileSdkVersion   = 25
+        targetSdkVersion    = 25
+        buildToolsVersion   = "25.0.2"
+        supportLibVersion   = "25.0.1"
+        googlePlayServicesVersion = "11.0.0"
+    }
+    ```
+
+    If you do not have *project-wide properties* defined and have a different play-services version than the one included in this library, use the following instead. But play service version should be `11+` or the library won't work.
 
     ```gradle
     ...
