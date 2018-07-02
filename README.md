@@ -112,7 +112,7 @@ componentDidMount() {
 ```
 
 # API
-#### `getCurrentPosition(successCallback, errorCallback, options)`
+#### `getCurrentPosition(successCallback, ?errorCallback, ?options)`
  - **successCallback**: Invoked with latest location info.
  - **errorCallback**: Invoked whenever an error is encountered.
  - **options**:
@@ -121,6 +121,19 @@ componentDidMount() {
    - enableHighAccuracy (bool)
    - distanceFilter (double)
    - showLocationDialog (whether to ask to enable location in Android)
+
+#### `watchPosition(successCallback, ?errorCallback, ?options)`
+ - **successCallback**: Invoked with latest location info.
+ - **errorCallback**: Invoked whenever an error is encountered.
+ - **options**:
+   - enableHighAccuracy (bool)
+   - distanceFilter (double)
+   - interval (millisecond)
+   - fastestInterval (millisecond)
+   - showLocationDialog (whether to ask to enable location in Android)
+
+#### `clearWatch(watchId)`
+ - watchId (id returned by `watchPosition`)
 
 Checkout [React Native documentation](https://facebook.github.io/react-native/docs/geolocation.html#reference) to see the list of available methods.
 
@@ -136,8 +149,8 @@ Checkout [React Native documentation](https://facebook.github.io/react-native/do
 | INTERNAL_ERROR | -1 | Library crashed for some reason or the `getCurrentActivity()` returned null |
 
 # TODO
-- [ ] Implement `watchPosition` & `clearWatch` methods for android
-- [ ] Implement `stopObserving` method for android
+- [x] Implement `watchPosition` & `clearWatch` methods for android
+- [x] Implement `stopObserving` method for android
 
 # FAQ
 1. **Location timeout still happening ?**
