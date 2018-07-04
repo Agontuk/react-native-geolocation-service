@@ -116,21 +116,25 @@ componentDidMount() {
  - **successCallback**: Invoked with latest location info.
  - **errorCallback**: Invoked whenever an error is encountered.
  - **options**:
-   - timeout (ms)
-   - maximumAge (ms)
-   - enableHighAccuracy (bool)
-   - distanceFilter (double)
-   - showLocationDialog (whether to ask to enable location in Android)
+    | Name | Type | Default | Description |
+    | -- | -- | -- | -- |
+    | timeout | `ms` | -- | Request timeout |
+    | maximumAge | `ms` | `INFINITY` | How long previous location will be cached |
+    | enableHighAccuracy | `bool` | `false` | Use high accuracy mode
+    | distanceFilter | `m` | `0` | Minimum displacement in meters
+    | showLocationDialog | `bool` | `true` | whether to ask to enable location in Android
 
 #### `watchPosition(successCallback, ?errorCallback, ?options)`
  - **successCallback**: Invoked with latest location info.
  - **errorCallback**: Invoked whenever an error is encountered.
  - **options**:
-   - enableHighAccuracy (bool)
-   - distanceFilter (double)
-   - interval (millisecond)
-   - fastestInterval (millisecond)
-   - showLocationDialog (whether to ask to enable location in Android)
+    | Name | Type | Default | Description |
+    | -- | -- | -- | -- |
+    | enableHighAccuracy | `bool` | `false` | Use high accuracy mode
+    | distanceFilter | `m` | `100` | Minimum displacement between location updates in meters
+    | interval | `ms` | `10000` |  Interval for active location updates
+    | fastestInterval | `ms` | `5000` | Fastest rate at which your application will receive location updates, which might be faster than `interval` in some situations (for example, if other applications are triggering location updates)
+    | showLocationDialog | `bool` | `true` | whether to ask to enable location in Android
 
 #### `clearWatch(watchId)`
  - watchId (id returned by `watchPosition`)
