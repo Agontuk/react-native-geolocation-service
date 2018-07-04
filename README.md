@@ -116,6 +116,7 @@ componentDidMount() {
  - **successCallback**: Invoked with latest location info.
  - **errorCallback**: Invoked whenever an error is encountered.
  - **options**:
+
     | Name | Type | Default | Description |
     | -- | -- | -- | -- |
     | timeout | `ms` | -- | Request timeout |
@@ -128,6 +129,7 @@ componentDidMount() {
  - **successCallback**: Invoked with latest location info.
  - **errorCallback**: Invoked whenever an error is encountered.
  - **options**:
+
     | Name | Type | Default | Description |
     | -- | -- | -- | -- |
     | enableHighAccuracy | `bool` | `false` | Use high accuracy mode
