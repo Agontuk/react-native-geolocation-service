@@ -27,6 +27,9 @@
     "type": "git",
     "url": "https://github.com/Agontuk/react-native-geolocation-service"
   },
+  "peerDependencies": {
+    "react-native": "^0.55.4"
+  },
   "devDependencies": {
     "babel-eslint": "^7.2.3",
     "eslint": "^4.4.1",
