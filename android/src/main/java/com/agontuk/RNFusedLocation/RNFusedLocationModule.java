@@ -1,5 +1,6 @@
 package com.agontuk.RNFusedLocation;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
@@ -32,6 +33,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.lang.RuntimeException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     public static final String TAG = "RNFusedLocation";
@@ -103,6 +106,18 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     @Override
     public String getName() {
         return TAG;
+    }
+
+    @Override
+    public Map<String, Object> getConstants() {
+        final Map<String, Object> constants = new HashMap<>();
+        constants.put(LocationError.PERMISSION_DENIED.name(), LocationError.PERMISSION_DENIED.getValue());
+        constants.put(LocationError.POSITION_UNAVAILABLE.name(), LocationError.POSITION_UNAVAILABLE.getValue());
+        constants.put(LocationError.TIMEOUT.name(), LocationError.TIMEOUT.getValue());
+        constants.put(LocationError.PLAY_SERVICE_NOT_AVAILABLE.name(), LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue());
+        constants.put(LocationError.SETTINGS_NOT_SATISFIED.name(), LocationError.SETTINGS_NOT_SATISFIED.getValue());
+        constants.put(LocationError.INTERNAL_ERROR.name(), LocationError.INTERNAL_ERROR.getValue());
+        return constants;
     }
 
     /**
@@ -339,6 +354,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     /**
      * Get last known location if it exists, otherwise request a new update.
      */
+    @SuppressLint("MissingPermission")
     private void getUserLocation() {
         if (mFusedProviderClient != null) {
             mFusedProviderClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {

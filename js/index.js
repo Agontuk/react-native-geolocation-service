@@ -100,7 +100,14 @@ if (Platform.OS === 'android') {
 
                 subscriptions = [];
             }
-        }
+        },
+
+        PERMISSION_DENIED: RNFusedLocation.PERMISSION_DENIED,
+        POSITION_UNAVAILABLE: RNFusedLocation.POSITION_UNAVAILABLE,
+        TIMEOUT: RNFusedLocation.TIMEOUT,
+        PLAY_SERVICE_NOT_AVAILABLE: RNFusedLocation.PLAY_SERVICE_NOT_AVAILABLE,
+        SETTINGS_NOT_SATISFIED: RNFusedLocation.SETTINGS_NOT_SATISFIED,
+        INTERNAL_ERROR: RNFusedLocation.INTERNAL_ERROR
     };
 }
 

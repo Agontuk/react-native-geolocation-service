@@ -106,7 +106,11 @@ componentDidMount() {
             },
             (error) => {
                 // See error code charts below.
-                console.log(error.code, error.message);
+                if(error.code === Geolocation.SETTINGS_NOT_SATISFIED){
+                    this.handleSettingsNotSatisfied();
+                }else{
+                    console.log(error.code, error.message);
+                }
             },
             { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
         );
@@ -156,6 +160,20 @@ Checkout [React Native documentation](https://facebook.github.io/react-native/do
 | PLAY_SERVICE_NOT_AVAILABLE | 4 | Google play service is not installed or has an older version |
 | SETTINGS_NOT_SATISFIED | 5 | Location service is not enabled or location mode is not appropriate for the current request |
 | INTERNAL_ERROR | -1 | Library crashed for some reason or the `getCurrentActivity()` returned null |
+
+The error codes are exposed as constants and are available in JS through the `Geolocation` module.
+
+```js
+...
+import Geolocation from 'react-native-geolocation-service';
+...
+console.log(Geolocation.PERMISSION_DENIED); // 1.
+console.log(Geolocation.POSITION_UNAVAILABLE); // 2.
+console.log(Geolocation.TIMEOUT); // 3.
+console.log(Geolocation.PLAY_SERVICE_NOT_AVAILABLE); // 4.
+console.log(Geolocation.SETTINGS_NOT_SATISFIED ); // 5.
+console.log(Geolocation.INTERNAL_ERROR ); // -1.
+```
 
 # TODO
 - [x] Implement `watchPosition` & `clearWatch` methods for android
