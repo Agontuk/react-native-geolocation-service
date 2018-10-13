@@ -10,6 +10,10 @@ This library is created in an attempt to fix the location timeout issue on andro
 ```bash
 yarn add react-native-geolocation-service
 ```
+or 
+```bash
+npm install react-native-geolocation-service
+```
 
 # Setup
 
@@ -23,7 +27,7 @@ No additional setup is required, since it uses the React Native's default Geoloc
     ...
     dependencies {
         ...
-        compile project(':react-native-geolocation-service')
+        implementation project(':react-native-geolocation-service')
     }
     ```
 
@@ -37,11 +41,10 @@ No additional setup is required, since it uses the React Native's default Geoloc
      + Project-wide Gradle configuration properties
      */
     ext {
-        compileSdkVersion   = 25
-        targetSdkVersion    = 25
-        buildToolsVersion   = "25.0.2"
-        supportLibVersion   = "25.0.1"
-        googlePlayServicesVersion = "11.0.0"
+        compileSdkVersion   = 26
+        targetSdkVersion    = 26
+        buildToolsVersion   = "27.0.3"
+        googlePlayServicesVersion = "15.0.1"
     }
     ```
 
@@ -51,10 +54,10 @@ No additional setup is required, since it uses the React Native's default Geoloc
     ...
     dependencies {
         ...
-        compile(project(':react-native-geolocation-service')) {
+        implementation(project(':react-native-geolocation-service')) {
             exclude group: 'com.google.android.gms', module: 'play-services-location'
         }
-        compile 'com.google.android.gms:play-services-location:<insert your play service version here>'
+        implementation 'com.google.android.gms:play-services-location:<insert your play service version here>'
     }
     ```
 
