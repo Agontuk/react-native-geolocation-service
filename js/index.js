@@ -15,6 +15,16 @@ if (Platform.OS === 'android') {
 
         requestAuthorization: () => {},
 
+        getCurrentLocationSettings: async (success, error = noop) => {
+            if (!success) {
+                // eslint-disable-next-line no-console
+                console.error('Must provide a success callback');
+            }
+
+            // Right now, we're assuming user already granted location permission.
+            RNFusedLocation.getCurrentLocationSettings(success, error);
+        },
+
         getCurrentPosition: async (success, error = noop, options = {}) => {
             if (!success) {
                 // eslint-disable-next-line no-console

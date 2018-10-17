@@ -150,6 +150,38 @@ componentDidMount() {
 
 Checkout [React Native documentation](https://facebook.github.io/react-native/docs/geolocation.html#reference) to see the list of available methods.
 
+# Missing API for Android.
+#### `getCurrentLocationSettings(successCallback, ?errorCallback)`
+ - **successCallback**: Invoked with latest location settings info.
+ - **errorCallback**: Invoked whenever an error is encountered.
+ 
+ - settings  (current location settings on the device returned in `successCallback`)
+ ```js          
+      {
+        "locationMode":"LOCATION_MODE_HIGH_ACCURACY",
+        "locationEnabled": "true",
+        "gpsProvider": {
+            "name": "gps",
+            "enabled": "true",
+            "accuracy": "ACCURACY_FINE",
+            "requiresCell": "false",
+            "requiresNetwork": "false",
+            "requiresSatellite": "false",
+        },
+        "networkProvider": {
+            "name": "network",
+            "enabled": "true",
+            "accuracy": "ACCURACY_COARSE",
+            "requiresCell": "false",   
+            "requiresNetwork": "false",
+            "requiresSatellite": "false"
+        }
+      }                
+ ```
+
+ - settings.locationMode (current location mode setted on the device, could be any of these values: "LOCATION_MODE_OFF", "LOCATION_MODE_SENSORS_ONLY", "LOCATION_MODE_BATTERY_SAVING", "LOCATION_MODE_HIGH_ACCURACY" or "LOCATION_MODE_UNDEFINED". Taken from [here](https://developer.android.com/reference/android/provider/Settings.Secure#LOCATION_MODE))
+
+ - settings.[gpsProvider|networkProvider].accuracy (accuracy of respective location provider, could be any of these values: "ACCURACY_FINE" or "ACCURACY_COARSE". Taken from [here](https://developer.android.com/reference/android/location/LocationProvider.html#getAccuracy()))
 
 # Error Codes
 | Name | Code | Description |

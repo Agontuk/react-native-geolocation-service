@@ -1,5 +1,6 @@
 package com.agontuk.RNFusedLocation;
 
+import android.annotation.SuppressLint;
 import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
@@ -7,13 +8,10 @@ import android.util.Log;
 
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.WritableMap;
-
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
-
-import java.lang.RuntimeException;
 
 public class SingleLocationUpdate {
     private final FusedLocationProviderClient mFusedProviderClient;
@@ -38,13 +36,12 @@ public class SingleLocationUpdate {
             }
         }
     };
-
     private final LocationCallback mLocationCallback = new LocationCallback() {
         @Override
         public void onLocationResult(LocationResult locationResult) {
             synchronized (SingleLocationUpdate.this) {
                 Location location = locationResult.getLastLocation();
-                invokeSuccess(LocationUtils.locationToMap(location));
+                invokeSuccess(location);
 
                 mHandler.removeCallbacks(mTimeoutRunnable);
 
@@ -72,6 +69,7 @@ public class SingleLocationUpdate {
     /**
      * Request one time location update
      */
+    @SuppressLint("MissingPermission")
     public void getLocation() {
         if (mFusedProviderClient != null) {
             mFusedProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.getMainLooper());
@@ -82,7 +80,9 @@ public class SingleLocationUpdate {
     /**
      * Helper method to invoke success callback
      */
-    private void invokeSuccess(WritableMap data) {
+    private void invokeSuccess(Location location) {
+        WritableMap data = LocationUtils.buildSuccess(location);
+
         try {
             if (mSuccessCallback != null) {
                 mSuccessCallback.invoke(data);
@@ -97,9 +97,11 @@ public class SingleLocationUpdate {
      * Helper method to invoke error callback
      */
     private void invokeError(int code, String message) {
+        WritableMap data = LocationUtils.buildError(code, message);
+
         try {
             if (mErrorCallback != null) {
-                mErrorCallback.invoke(LocationUtils.buildError(code, message));
+                mErrorCallback.invoke(data);
             }
         } catch (RuntimeException e) {
             // Illegal callback invocation

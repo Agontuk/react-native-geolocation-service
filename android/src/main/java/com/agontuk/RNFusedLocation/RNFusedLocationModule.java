@@ -2,9 +2,14 @@ package com.agontuk.RNFusedLocation;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
+import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
+import android.location.LocationProvider;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.facebook.react.bridge.ActivityEventListener;
@@ -17,7 +22,6 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.SystemClock;
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
-
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -32,18 +36,18 @@ import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
-import java.lang.RuntimeException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class RNFusedLocationModule extends ReactContextBaseJavaModule {
+
     public static final String TAG = "RNFusedLocation";
     private static final int REQUEST_SETTINGS_SINGLE_UPDATE = 11403;
     private static final int REQUEST_SETTINGS_CONTINUOUS_UPDATE = 11404;
     private static final float DEFAULT_DISTANCE_FILTER = 100;
     private static final int DEFAULT_ACCURACY = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
-    private static final long DEFAULT_INTERVAL = 10 * 1000;  /* 10 secs */;
-    private static final long DEFAULT_FASTEST_INTERVAL = 5 * 1000; /* 5 sec */;
+    private static final long DEFAULT_INTERVAL = 10 * 1000;  /* 10 secs */
+    private static final long DEFAULT_FASTEST_INTERVAL = 5 * 1000; /* 5 sec */
 
     private boolean mShowLocationDialog = true;
     private int mLocationPriority = DEFAULT_ACCURACY;
@@ -59,7 +63,6 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     private SettingsClient mSettingsClient;
     private LocationRequest mLocationRequest;
     private LocationCallback mLocationCallback;
-
     private final ActivityEventListener mActivityEventListener = new BaseActivityEventListener() {
         @Override
         public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent intent) {
@@ -68,9 +71,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                     // User cancelled the request.
                     // TODO: allow user to ignore this & request location.
                     invokeError(
-                        LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                        "Location settings are not satisfied.",
-                        true
+                            LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                            "Location settings are not satisfied.",
+                            true
                     );
                 } else if (resultCode == Activity.RESULT_OK) {
                     // Location settings changed successfully, request user location.
@@ -81,9 +84,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                     // User cancelled the request.
                     // TODO: allow user to ignore this & request location.
                     invokeError(
-                        LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                        "Location settings are not satisfied.",
-                        false
+                            LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                            "Location settings are not satisfied.",
+                            false
                     );
                 } else if (resultCode == Activity.RESULT_OK) {
                     // Location settings changed successfully, request user location.
@@ -92,6 +95,8 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
             }
         }
     };
+    private Callback mSuccessSettingsCallback;
+    private Callback mErrorSettingsCallback;
 
     public RNFusedLocationModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -121,13 +126,72 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     }
 
     /**
+     * Get the current location settings. This return the current state of locations providers in
+     * the device.
+     *
+     * @param success success callback
+     * @param error   error callback
+     */
+    @ReactMethod
+    public void getCurrentLocationSettings(final Callback success, final Callback error) {
+        ReactApplicationContext context = getContext();
+
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION)) {
+
+            int locationMode = LocationUtils.LOCATION_MODE_UNDEFINED;
+
+            try {
+                locationMode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
+            } catch (Settings.SettingNotFoundException e) {
+                e.printStackTrace();
+            }
+
+
+            LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            LocationProvider gpsProvider = locationManager.getProvider(LocationManager.GPS_PROVIDER);
+            boolean gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            LocationProvider networkProvider = locationManager.getProvider(LocationManager.NETWORK_PROVIDER);
+            boolean networkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+            boolean locationEnabled = gpsEnabled || networkEnabled;
+
+            mSuccessSettingsCallback = success;
+            mErrorSettingsCallback = error;
+
+            if (!LocationUtils.hasLocationPermission(context)) {
+                invokeSettingsError(
+                        LocationError.PERMISSION_DENIED.getValue(),
+                        "Location permission not granted."
+                );
+                return;
+            }
+
+            if (!LocationUtils.isGooglePlayServicesAvailable(context)) {
+                invokeSettingsError(
+                        LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
+                        "Google play service is not available."
+                );
+                return;
+            }
+
+            invokeSettingsSuccess(locationMode, locationEnabled, gpsProvider, gpsEnabled, networkProvider, networkEnabled);
+        }
+
+        invokeSettingsError(
+                LocationError.INTERNAL_ERROR.getValue(),
+                "Internal error occurred."
+        );
+        return;
+
+    }
+
+    /**
      * Get the current position. This can return almost immediately if the location is cached or
      * request an update, which might take a while.
      *
      * @param options map containing optional arguments: timeout (millis), maximumAge (millis),
-     *        highAccuracy (boolean), distanceFilter (double) and showLocationDialog (boolean)
+     *                highAccuracy (boolean), distanceFilter (double) and showLocationDialog (boolean)
      * @param success success callback
-     * @param error error callback
+     * @param error   error callback
      */
     @ReactMethod
     public void getCurrentPosition(ReadableMap options, final Callback success, final Callback error) {
@@ -138,49 +202,49 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
 
         if (!LocationUtils.hasLocationPermission(context)) {
             invokeError(
-                LocationError.PERMISSION_DENIED.getValue(),
-                "Location permission not granted.",
-                true
+                    LocationError.PERMISSION_DENIED.getValue(),
+                    "Location permission not granted.",
+                    true
             );
             return;
         }
 
         if (!LocationUtils.isGooglePlayServicesAvailable(context)) {
             invokeError(
-                LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
-                "Google play service is not available.",
-                true
+                    LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
+                    "Google play service is not available.",
+                    true
             );
             return;
         }
 
         boolean highAccuracy = options.hasKey("enableHighAccuracy") &&
-            options.getBoolean("enableHighAccuracy");
+                options.getBoolean("enableHighAccuracy");
 
         // TODO: Make other PRIORITY_* constants availabe to the user
         mLocationPriority = highAccuracy ? LocationRequest.PRIORITY_HIGH_ACCURACY : DEFAULT_ACCURACY;
 
         mTimeout = options.hasKey("timeout") ? (long) options.getDouble("timeout") : Long.MAX_VALUE;
         mMaximumAge = options.hasKey("maximumAge")
-            ? options.getDouble("maximumAge")
-            : Double.POSITIVE_INFINITY;
+                ? options.getDouble("maximumAge")
+                : Double.POSITIVE_INFINITY;
         mDistanceFilter = options.hasKey("distanceFilter")
-            ? (float) options.getDouble("distanceFilter")
-            : 0;
+                ? (float) options.getDouble("distanceFilter")
+                : 0;
         mShowLocationDialog = options.hasKey("showLocationDialog")
-            ? options.getBoolean("showLocationDialog")
-            : true;
+                ? options.getBoolean("showLocationDialog")
+                : true;
 
         LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
 
         if (mSettingsClient != null) {
             mSettingsClient.checkLocationSettings(locationSettingsRequest)
-                .addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
-                    @Override
-                    public void onComplete(Task<LocationSettingsResponse> task) {
-                        onLocationSettingsResponse(task, true);
-                    }
-                });
+                    .addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+                        @Override
+                        public void onComplete(Task<LocationSettingsResponse> task) {
+                            onLocationSettingsResponse(task, true);
+                        }
+                    });
         }
     }
 
@@ -189,7 +253,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
      * {@link RCTDeviceEventEmitter} as {@code geolocationDidChange} events.
      *
      * @param options map containing optional arguments: highAccuracy (boolean), distanceFilter (double),
-     *        interval (millis), fastestInterval (millis)
+     *                interval (millis), fastestInterval (millis)
      */
     @ReactMethod
     public void startObserving(ReadableMap options) {
@@ -197,50 +261,50 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
 
         if (!LocationUtils.hasLocationPermission(context)) {
             invokeError(
-                LocationError.PERMISSION_DENIED.getValue(),
-                "Location permission not granted.",
-                false
+                    LocationError.PERMISSION_DENIED.getValue(),
+                    "Location permission not granted.",
+                    false
             );
             return;
         }
 
         if (!LocationUtils.isGooglePlayServicesAvailable(context)) {
             invokeError(
-                LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
-                "Google play service is not available.",
-                false
+                    LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
+                    "Google play service is not available.",
+                    false
             );
             return;
         }
 
         boolean highAccuracy = options.hasKey("enableHighAccuracy")
-            && options.getBoolean("enableHighAccuracy");
+                && options.getBoolean("enableHighAccuracy");
 
         // TODO: Make other PRIORITY_* constants availabe to the user
         mLocationPriority = highAccuracy ? LocationRequest.PRIORITY_HIGH_ACCURACY : DEFAULT_ACCURACY;
         mDistanceFilter = options.hasKey("distanceFilter")
-            ? (float) options.getDouble("distanceFilter")
-            : DEFAULT_DISTANCE_FILTER;
+                ? (float) options.getDouble("distanceFilter")
+                : DEFAULT_DISTANCE_FILTER;
         mUpdateInterval = options.hasKey("interval")
-            ? (long) options.getDouble("interval")
-            : DEFAULT_INTERVAL;
+                ? (long) options.getDouble("interval")
+                : DEFAULT_INTERVAL;
         mFastestInterval = options.hasKey("fastestInterval")
-            ? (long) options.getDouble("fastestInterval")
-            : DEFAULT_INTERVAL;
+                ? (long) options.getDouble("fastestInterval")
+                : DEFAULT_INTERVAL;
         mShowLocationDialog = options.hasKey("showLocationDialog")
-            ? options.getBoolean("showLocationDialog")
-            : true;
+                ? options.getBoolean("showLocationDialog")
+                : true;
 
         LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
 
         if (mSettingsClient != null) {
             mSettingsClient.checkLocationSettings(locationSettingsRequest)
-                .addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
-                    @Override
-                    public void onComplete(Task<LocationSettingsResponse> task) {
-                        onLocationSettingsResponse(task, false);
-                    }
-                });
+                    .addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+                        @Override
+                        public void onComplete(Task<LocationSettingsResponse> task) {
+                            onLocationSettingsResponse(task, false);
+                        }
+                    });
         }
     }
 
@@ -261,9 +325,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     private LocationSettingsRequest buildLocationSettingsRequest() {
         mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(mLocationPriority)
-            .setInterval(mUpdateInterval)
-            .setFastestInterval(mFastestInterval)
-            .setSmallestDisplacement(mDistanceFilter);
+                .setInterval(mUpdateInterval)
+                .setFastestInterval(mFastestInterval)
+                .setSmallestDisplacement(mDistanceFilter);
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
         builder.addLocationRequest(mLocationRequest);
@@ -277,11 +341,12 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
      * location request or not.
      */
     private void onLocationSettingsResponse(
-        Task<LocationSettingsResponse> task,
-        boolean isSingleUpdate
+            Task<LocationSettingsResponse> task,
+            boolean isSingleUpdate
     ) {
         try {
             LocationSettingsResponse response = task.getResult(ApiException.class);
+            
             // All location settings are satisfied, start location request.
             if (isSingleUpdate) {
                 getUserLocation();
@@ -296,11 +361,11 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                      * user a dialog. It means either location serivce is not enabled or
                      * default location mode is not enough to perform the request.
                      */
-                    if(!mShowLocationDialog) {
+                    if (!mShowLocationDialog) {
                         invokeError(
-                            LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                            "Location settings are not satisfied.",
-                            isSingleUpdate
+                                LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                                "Location settings are not satisfied.",
+                                isSingleUpdate
                         );
                         break;
                     }
@@ -311,28 +376,28 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
 
                         if (activity == null) {
                             invokeError(
-                                LocationError.INTERNAL_ERROR.getValue(),
-                                "Tried to open location dialog while not attached to an Activity",
-                                isSingleUpdate
+                                    LocationError.INTERNAL_ERROR.getValue(),
+                                    "Tried to open location dialog while not attached to an Activity",
+                                    isSingleUpdate
                             );
                             break;
                         }
 
                         resolvable.startResolutionForResult(
-                            activity,
-                            isSingleUpdate ? REQUEST_SETTINGS_SINGLE_UPDATE : REQUEST_SETTINGS_CONTINUOUS_UPDATE
+                                activity,
+                                isSingleUpdate ? REQUEST_SETTINGS_SINGLE_UPDATE : REQUEST_SETTINGS_CONTINUOUS_UPDATE
                         );
                     } catch (SendIntentException e) {
                         invokeError(
-                            LocationError.INTERNAL_ERROR.getValue(),
-                            "Internal error occurred",
-                            isSingleUpdate
+                                LocationError.INTERNAL_ERROR.getValue(),
+                                "Internal error occurred",
+                                isSingleUpdate
                         );
                     } catch (ClassCastException e) {
                         invokeError(
-                            LocationError.INTERNAL_ERROR.getValue(),
-                            "Internal error occurred",
-                            isSingleUpdate
+                                LocationError.INTERNAL_ERROR.getValue(),
+                                "Internal error occurred",
+                                isSingleUpdate
                         );
                     }
 
@@ -341,9 +406,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                     // TODO: we may have to handle other use case here.
                     // For now just say that settings are not ok.
                     invokeError(
-                        LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                        "Location settings are not satisfied.",
-                        isSingleUpdate
+                            LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                            "Location settings are not satisfied.",
+                            isSingleUpdate
                     );
 
                     break;
@@ -364,17 +429,17 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
 
                     if (location != null &&
                             (SystemClock.currentTimeMillis() - location.getTime()) < mMaximumAge) {
-                        invokeSuccess(LocationUtils.locationToMap(location), true);
+                        invokeSuccess(location, true);
                         return;
                     }
 
                     // Last location is not available, request location update.
                     new SingleLocationUpdate(
-                        mFusedProviderClient,
-                        mLocationRequest,
-                        mTimeout,
-                        mSuccessCallback,
-                        mErrorCallback
+                            mFusedProviderClient,
+                            mLocationRequest,
+                            mTimeout,
+                            mSuccessCallback,
+                            mErrorCallback
                     ).getLocation();
                 }
             });
@@ -384,13 +449,14 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     /**
      * Get periodic location updates based on the current location request.
      */
+    @SuppressLint("MissingPermission")
     private void getLocationUpdates() {
         if (mFusedProviderClient != null && mLocationRequest != null) {
             mLocationCallback = new LocationCallback() {
                 @Override
                 public void onLocationResult(LocationResult locationResult) {
                     Location location = locationResult.getLastLocation();
-                    invokeSuccess(LocationUtils.locationToMap(location), false);
+                    invokeSuccess(location, false);
                 }
             };
 
@@ -413,13 +479,20 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         mErrorCallback = null;
     }
 
+    private void emitEvent(String event, Object data) {
+        getContext().getJSModule(RCTDeviceEventEmitter.class)
+                .emit(event, data);
+    }
+
+
     /**
      * Helper method to invoke success callback
      */
-    private void invokeSuccess(WritableMap data, boolean isSingleUpdate) {
+    private void invokeSuccess(Location location, boolean isSingleUpdate) {
+        WritableMap data = LocationUtils.buildSuccess(location);
+
         if (!isSingleUpdate) {
-            getContext().getJSModule(RCTDeviceEventEmitter.class)
-                .emit("geolocationDidChange", data);
+            emitEvent("geolocationDidChange", data);
 
             return;
         }
@@ -440,19 +513,68 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
      * Helper method to invoke error callback
      */
     private void invokeError(int code, String message, boolean isSingleUpdate) {
+        WritableMap data = LocationUtils.buildError(code, message);
+
         if (!isSingleUpdate) {
-            getContext().getJSModule(RCTDeviceEventEmitter.class)
-                .emit("geolocationError", LocationUtils.buildError(code, message));
+            emitEvent("geolocationError", data);
 
             return;
         }
 
         try {
             if (mErrorCallback != null) {
-                mErrorCallback.invoke(LocationUtils.buildError(code, message));
+                mErrorCallback.invoke(data);
             }
 
             clearCallbacks();
+        } catch (RuntimeException e) {
+            // Illegal callback invocation
+            Log.w(TAG, e.getMessage());
+        }
+    }
+
+
+    /**
+     * Clear the JS settings callbacks
+     */
+    private void clearSettingsCallbacks() {
+        mSuccessSettingsCallback = null;
+        mErrorSettingsCallback = null;
+    }
+
+
+    /**
+     * Helper method to invoke success callback
+     */
+    private void invokeSettingsSuccess(int locationMode, boolean isLocationEnabled,
+                                       LocationProvider gpsProvider, boolean isGpsEnabled,
+                                       LocationProvider networkProvider, boolean isNetworkEnabled) {
+        WritableMap data = LocationUtils.buildLocationSettingsSuccess(locationMode, isLocationEnabled,
+                gpsProvider, isGpsEnabled, networkProvider, isNetworkEnabled);
+        try {
+            if (mSuccessSettingsCallback != null) {
+                mSuccessSettingsCallback.invoke(data);
+            }
+
+            clearSettingsCallbacks();
+        } catch (RuntimeException e) {
+            // Illegal callback invocation
+            Log.w(TAG, e.getMessage());
+        }
+    }
+
+    /**
+     * Helper method to invoke error callback
+     */
+    private void invokeSettingsError(int code, String message) {
+        WritableMap data = LocationUtils.buildError(code, message);
+
+        try {
+            if (mErrorSettingsCallback != null) {
+                mErrorSettingsCallback.invoke(data);
+            }
+
+            clearSettingsCallbacks();
         } catch (RuntimeException e) {
             // Illegal callback invocation
             Log.w(TAG, e.getMessage());
