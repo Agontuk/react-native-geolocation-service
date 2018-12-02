@@ -11,6 +11,12 @@ This library is created in an attempt to fix the location timeout issue on andro
 yarn add react-native-geolocation-service
 ```
 
+# Compatibility
+| RN Version | Package Version |
+| ---------- | --------------- |
+| 0.57+      | 2.0.0           |
+| <0.57      | 1.1.0           |
+
 # Setup
 
 ## iOS

@@ -1,5 +1,8 @@
 # Changelog
 
+### 2.0.0 (December 2, 2018)
+ - Support RN 0.57+
+
 ### 1.1.0 (July 2, 2018)
  - Added support for project wide gradle properties.
  - Added support for tracking location update.
