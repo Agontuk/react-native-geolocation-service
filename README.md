@@ -36,18 +36,35 @@ No additional setup is required, since it uses the React Native's default Geoloc
     If you've defined [project-wide properties](https://developer.android.com/studio/build/gradle-tips#configure-project-wide-properties) (recommended) in your root build.gradle, this library will detect the presence of the following properties:
 
     ```gradle
-    buildscript {...}
-    allprojects {...}
+    // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-    /**
-     + Project-wide Gradle configuration properties
-     */
-    ext {
-        compileSdkVersion   = 25
-        targetSdkVersion    = 25
-        buildToolsVersion   = "25.0.2"
-        supportLibVersion   = "25.0.1"
-        googlePlayServicesVersion = "11.0.0"
+    buildscript {
+        /**
+         + Project-wide Gradle configuration properties
+         */
+        ext {
+            buildToolsVersion = "28.0.2"
+            minSdkVersion = 16
+            compileSdkVersion = 28
+            targetSdkVersion = 27
+            supportLibVersion = "28.0.0"
+            googlePlayServicesVersion = "11.8.0"
+        }
+        repositories { ... }
+        dependencies { ... }
+    }
+
+    allprojects {
+        repositories {
+            configurations.all {
+                resolutionStrategy {
+                    force "com.google.android.gms:play-services-base:$googlePlayServicesVersion"
+                    force "com.google.android.gms:play-services-gcm:$googlePlayServicesVersion"
+                    force "com.google.android.gms:play-services-location:$googlePlayServicesVersion"
+                }
+            }
+            ...
+        }
     }
     ```
 
