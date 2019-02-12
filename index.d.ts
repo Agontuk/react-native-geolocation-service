@@ -17,9 +17,18 @@ declare module 'react-native-geolocation-service' {
     fastestInterval?: number
     showLocationDialog?: boolean
   }
+  
+  export enum GeoErrorCode {
+    PERMISSION_DENIED = 1,
+    POSITION_UNAVAILABLE = 2,
+    TIMEOUT = 3,
+    PLAY_SERVICE_NOT_AVAILABLE = 4,
+    SETTINGS_NOT_SATISFIED = 5,
+    INTERNAL_ERROR = -1
+  }
 
   export interface GeoError {
-    code: number
+    code: GeoErrorCode
     message: string
   }
 
