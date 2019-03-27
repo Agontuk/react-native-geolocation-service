@@ -64,7 +64,7 @@ declare module 'react-native-geolocation-service' {
     successCallback: SuccessCallback,
     errorCallback?: ErrorCallback,
     options?: GeoWatchOptions
-  ): Promise<GeoPosition>
+  ): number
 
   type SuccessCallback = (position: GeoPosition) => void
   type ErrorCallback = (error: GeoError) => void
