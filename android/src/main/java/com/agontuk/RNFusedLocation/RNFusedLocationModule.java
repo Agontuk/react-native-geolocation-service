@@ -43,6 +43,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     private static final long DEFAULT_FASTEST_INTERVAL = 5 * 1000; /* 5 sec */;
 
     private boolean mShowLocationDialog = true;
+    private boolean mForceRequestLocation = false;
     private int mLocationPriority = DEFAULT_ACCURACY;
     private long mUpdateInterval = DEFAULT_INTERVAL;
     private long mFastestInterval = DEFAULT_FASTEST_INTERVAL;
@@ -61,30 +62,26 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         @Override
         public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent intent) {
             if (requestCode == REQUEST_SETTINGS_SINGLE_UPDATE) {
-                if (resultCode == Activity.RESULT_CANCELED) {
-                    // User cancelled the request.
-                    // TODO: allow user to ignore this & request location.
-                    invokeError(
-                        LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                        "Location settings are not satisfied.",
-                        true
-                    );
-                } else if (resultCode == Activity.RESULT_OK) {
+                if (resultCode == Activity.RESULT_OK || mForceRequestLocation) {
                     // Location settings changed successfully, request user location.
                     getUserLocation();
+                } else if (resultCode == Activity.RESULT_CANCELED) {
+                    invokeError(
+                            LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                            "Location settings are not satisfied.",
+                            true
+                    );
                 }
             } else if (requestCode == REQUEST_SETTINGS_CONTINUOUS_UPDATE) {
-                if (resultCode == Activity.RESULT_CANCELED) {
-                    // User cancelled the request.
-                    // TODO: allow user to ignore this & request location.
-                    invokeError(
-                        LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                        "Location settings are not satisfied.",
-                        false
-                    );
-                } else if (resultCode == Activity.RESULT_OK) {
+                if (resultCode == Activity.RESULT_OK || mForceRequestLocation) {
                     // Location settings changed successfully, request user location.
                     getLocationUpdates();
+                } else if (resultCode == Activity.RESULT_CANCELED) {
+                    invokeError(
+                            LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                            "Location settings are not satisfied.",
+                            true
+                    );
                 }
             }
         }
@@ -153,8 +150,11 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
             ? (float) options.getDouble("distanceFilter")
             : 0;
         mShowLocationDialog = options.hasKey("showLocationDialog")
-            ? options.getBoolean("showLocationDialog")
-            : true;
+                ? options.getBoolean("showLocationDialog")
+                : true;
+        mForceRequestLocation = options.hasKey("forceRequestLocation")
+                ? options.getBoolean("forceRequestLocation")
+                : true;
 
         LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
 
