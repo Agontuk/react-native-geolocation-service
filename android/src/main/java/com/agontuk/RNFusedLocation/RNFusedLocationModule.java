@@ -127,6 +127,15 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
             return;
         }
 
+        if (!LocationUtils.isLocationEnabled(context)) {
+            invokeError(
+                    LocationError.POSITION_UNAVAILABLE.getValue(),
+                    "No location provider available.",
+                    true
+            );
+            return;
+        }
+
         if (!LocationUtils.isGooglePlayServicesAvailable(context)) {
             invokeError(
                 LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
@@ -185,6 +194,15 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                 LocationError.PERMISSION_DENIED.getValue(),
                 "Location permission not granted.",
                 false
+            );
+            return;
+        }
+
+        if (!LocationUtils.isLocationEnabled(context)) {
+            invokeError(
+                    LocationError.POSITION_UNAVAILABLE.getValue(),
+                    "No location provider available.",
+                    false
             );
             return;
         }
