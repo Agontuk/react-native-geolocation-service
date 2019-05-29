@@ -3,16 +3,20 @@ apply plugin: 'com.android.library'
 def DEFAULT_COMPILE_SDK_VERSION             = 26
 def DEFAULT_BUILD_TOOLS_VERSION             = "26.0.2"
 def DEFAULT_TARGET_SDK_VERSION              = 26
-def DEFAULT_GOOGLE_PLAY_SERVICES_VERSION    = "11.4.2"
 def DEFAULT_SUPPORT_LIB_VERSION             = "26.1.0"
+def DEFAULT_GOOGLE_PLAY_SERVICES_LOCATION_VERSION   = "16.0.0"
+
+def safeExtGet(prop, fallback) {
+    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
 
 android {
-    compileSdkVersion rootProject.hasProperty('compileSdkVersion') ? rootProject.compileSdkVersion : DEFAULT_COMPILE_SDK_VERSION
-    buildToolsVersion rootProject.hasProperty('buildToolsVersion') ? rootProject.buildToolsVersion : DEFAULT_BUILD_TOOLS_VERSION
+    compileSdkVersion safeExtGet('compileSdkVersion', DEFAULT_COMPILE_SDK_VERSION)
+    buildToolsVersion safeExtGet('buildToolsVersion', DEFAULT_BUILD_TOOLS_VERSION)
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion rootProject.hasProperty('targetSdkVersion') ? rootProject.targetSdkVersion : DEFAULT_TARGET_SDK_VERSION
+        targetSdkVersion safeExtGet('targetSdkVersion', DEFAULT_TARGET_SDK_VERSION)
     }
 
     lintOptions {
@@ -21,10 +25,10 @@ android {
 }
 
 dependencies {
-    def googlePlayServicesVersion = rootProject.hasProperty('googlePlayServicesVersion') ? rootProject.googlePlayServicesVersion : DEFAULT_GOOGLE_PLAY_SERVICES_VERSION
-    def supportLibVersion = rootProject.hasProperty('supportLibVersion') ? rootProject.supportLibVersion : DEFAULT_SUPPORT_LIB_VERSION
+    def supportLibVersion = safeExtGet('supportLibVersion', DEFAULT_SUPPORT_LIB_VERSION)
+    def playServicesLocationVersion = safeExtGet('googlePlayServicesLocationVersion', DEFAULT_GOOGLE_PLAY_SERVICES_LOCATION_VERSION)
 
     compileOnly "com.facebook.react:react-native:+"
     implementation "com.android.support:appcompat-v7:$supportLibVersion"
-    implementation "com.google.android.gms:play-services-location:$googlePlayServicesVersion"
+    implementation "com.google.android.gms:play-services-location:$playServicesLocationVersion"
 }

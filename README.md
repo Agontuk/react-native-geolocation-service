@@ -47,7 +47,7 @@ No additional setup is required, since it uses the React Native's default Geoloc
         targetSdkVersion    = 25
         buildToolsVersion   = "25.0.2"
         supportLibVersion   = "25.0.1"
-        googlePlayServicesVersion = "11.0.0"
+        googlePlayServicesLocationVersion = "11.0.0"
     }
     ```
 
