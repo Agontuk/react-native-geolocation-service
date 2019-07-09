@@ -7,8 +7,14 @@ This library is created in an attempt to fix the location timeout issue on andro
 > NOTE: Location request can still timeout since many android devices have GPS issue in the hardware level or in the system software level. Check the [FAQ](#faq) for more details.
 
 # Installation
+yarn
 ```bash
 yarn add react-native-geolocation-service
+```
+
+npm
+```bash
+npm install react-native-geolocation-service
 ```
 
 # Compatibility
