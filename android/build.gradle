@@ -24,7 +24,7 @@ dependencies {
     def googlePlayServicesVersion = rootProject.hasProperty('googlePlayServicesVersion') ? rootProject.googlePlayServicesVersion : DEFAULT_GOOGLE_PLAY_SERVICES_VERSION
     def supportLibVersion = rootProject.hasProperty('supportLibVersion') ? rootProject.supportLibVersion : DEFAULT_SUPPORT_LIB_VERSION
 
-    compileOnly "com.facebook.react:react-native:+"
+    implementation "com.facebook.react:react-native:+"
     implementation "com.android.support:appcompat-v7:$supportLibVersion"
     implementation "com.google.android.gms:play-services-location:$googlePlayServicesVersion"
 }
