@@ -17,8 +17,8 @@ declare module 'react-native-geolocation-service' {
     fastestInterval?: number
     showLocationDialog?: boolean
   }
-  
-  export enum GeoErrorCode {
+
+  export enum PositionError {
     PERMISSION_DENIED = 1,
     POSITION_UNAVAILABLE = 2,
     TIMEOUT = 3,
@@ -28,7 +28,7 @@ declare module 'react-native-geolocation-service' {
   }
 
   export interface GeoError {
-    code: GeoErrorCode
+    code: PositionError
     message: string
   }
 
