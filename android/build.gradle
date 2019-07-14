@@ -1,12 +1,28 @@
 apply plugin: 'com.android.library'
 
-def DEFAULT_COMPILE_SDK_VERSION             = 26
-def DEFAULT_BUILD_TOOLS_VERSION             = "26.0.2"
+def DEFAULT_COMPILE_SDK_VERSION             = 28
+def DEFAULT_BUILD_TOOLS_VERSION             = "28.0.3"
 def DEFAULT_TARGET_SDK_VERSION              = 26
-def DEFAULT_GOOGLE_PLAY_SERVICES_VERSION    = "11.4.2"
-def DEFAULT_SUPPORT_LIB_VERSION             = "26.1.0"
+def DEFAULT_GOOGLE_PLAY_SERVICES_VERSION    = "16.0.0"
+def DEFAULT_SUPPORT_LIB_VERSION             = "28.0.0"
+
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.2.1'
+    }
+}
 
 android {
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     compileSdkVersion rootProject.hasProperty('compileSdkVersion') ? rootProject.compileSdkVersion : DEFAULT_COMPILE_SDK_VERSION
     buildToolsVersion rootProject.hasProperty('buildToolsVersion') ? rootProject.buildToolsVersion : DEFAULT_BUILD_TOOLS_VERSION
 
@@ -20,12 +36,20 @@ android {
     }
 }
 
+repositories {
+    maven { url "$rootDir/../node_modules/react-native/android" }
+    mavenLocal()
+    google()
+    jcenter()
+
+}
+
 dependencies {
     def googlePlayServicesVersion = rootProject.hasProperty('googlePlayServicesVersion') ? rootProject.googlePlayServicesVersion : DEFAULT_GOOGLE_PLAY_SERVICES_VERSION
     def supportLibVersion = rootProject.hasProperty('supportLibVersion') ? rootProject.supportLibVersion : DEFAULT_SUPPORT_LIB_VERSION
 
-    implementation "com.facebook.react:react-native:+"
-    implementation 'androidx.appcompat:appcompat:1.1.0-rc01'
-    //implementation "com.android.support:appcompat-v7:$supportLibVersion"
+    compileOnly 'com.facebook.react:react-native:+'
+    //implementation 'androidx.appcompat:appcompat:1.1.0-rc01'
+    implementation "com.android.support:appcompat-v7:$supportLibVersion"
     implementation "com.google.android.gms:play-services-location:$googlePlayServicesVersion"
 }
