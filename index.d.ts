@@ -4,7 +4,8 @@ declare module 'react-native-geolocation-service' {
     maximumAge?: number
     enableHighAccuracy?: boolean
     distanceFilter?: number
-    showLocationDialog?: boolean
+    showLocationDialog?: boolean,
+    forceRequestLocation?: boolean
   }
 
   interface GeoWatchOptions {
@@ -15,7 +16,8 @@ declare module 'react-native-geolocation-service' {
     useSignificantChanges?: boolean
     interval?: number
     fastestInterval?: number
-    showLocationDialog?: boolean
+    showLocationDialog?: boolean,
+    forceRequestLocation?: boolean
   }
 
   export enum PositionError {

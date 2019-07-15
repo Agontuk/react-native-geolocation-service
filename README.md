@@ -135,7 +135,8 @@ componentDidMount() {
     | maximumAge | `ms` | `INFINITY` | How long previous location will be cached |
     | enableHighAccuracy | `bool` | `false` | Use high accuracy mode
     | distanceFilter | `m` | `0` | Minimum displacement in meters
-    | showLocationDialog | `bool` | `true` | whether to ask to enable location in Android
+    | showLocationDialog | `bool` | `true` | Whether to ask to enable location in Android
+    | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog
 
 #### `watchPosition(successCallback, ?errorCallback, ?options)`
  - **successCallback**: Invoked with latest location info.
@@ -149,6 +150,7 @@ componentDidMount() {
     | interval | `ms` | `10000` |  Interval for active location updates
     | fastestInterval | `ms` | `5000` | Fastest rate at which your application will receive location updates, which might be faster than `interval` in some situations (for example, if other applications are triggering location updates)
     | showLocationDialog | `bool` | `true` | whether to ask to enable location in Android
+    | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog
 
 #### `clearWatch(watchId)`
  - watchId (id returned by `watchPosition`)
