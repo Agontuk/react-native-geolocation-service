@@ -35,7 +35,7 @@ No additional setup is required, since it uses the React Native's default Geoloc
     ...
     dependencies {
         ...
-        compile project(':react-native-geolocation-service')
+        implementation project(':react-native-geolocation-service')
     }
     ```
 
