@@ -1,22 +1,25 @@
 import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 
 // eslint-disable-next-line import/no-mutable-exports
-let Geolocation = require('@react-native-community/geolocation');
+let Geolocation = null;
 
 const noop = () => {};
 let subscriptions = [];
 let updatesEnabled = false;
 
 export const PositionError = Object.freeze({
-  PERMISSION_DENIED: 1,
-  POSITION_UNAVAILABLE: 2,
-  TIMEOUT: 3,
-  PLAY_SERVICE_NOT_AVAILABLE: 4,
-  SETTINGS_NOT_SATISFIED: 5,
-  INTERNAL_ERROR: -1,
+    PERMISSION_DENIED: 1,
+    POSITION_UNAVAILABLE: 2,
+    TIMEOUT: 3,
+    PLAY_SERVICE_NOT_AVAILABLE: 4,
+    SETTINGS_NOT_SATISFIED: 5,
+    INTERNAL_ERROR: -1
 });
 
-if (Platform.OS === 'android') {
+if (Platform.OS === 'ios') {
+    // eslint-disable-next-line global-require
+    Geolocation = require('@react-native-community/geolocation');
+} else if (Platform.OS === 'android') {
     const { RNFusedLocation } = NativeModules;
     const LocationEventEmitter = new NativeEventEmitter(RNFusedLocation);
 

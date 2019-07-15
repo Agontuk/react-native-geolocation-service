@@ -67,9 +67,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                     getUserLocation();
                 } else if (resultCode == Activity.RESULT_CANCELED) {
                     invokeError(
-                            LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                            "Location settings are not satisfied.",
-                            true
+                        LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                        "Location settings are not satisfied.",
+                        true
                     );
                 }
             } else if (requestCode == REQUEST_SETTINGS_CONTINUOUS_UPDATE) {
@@ -78,9 +78,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                     getLocationUpdates();
                 } else if (resultCode == Activity.RESULT_CANCELED) {
                     invokeError(
-                            LocationError.SETTINGS_NOT_SATISFIED.getValue(),
-                            "Location settings are not satisfied.",
-                            true
+                        LocationError.SETTINGS_NOT_SATISFIED.getValue(),
+                        "Location settings are not satisfied.",
+                        false
                     );
                 }
             }
@@ -129,9 +129,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
 
         if (!LocationUtils.isLocationEnabled(context)) {
             invokeError(
-                    LocationError.POSITION_UNAVAILABLE.getValue(),
-                    "No location provider available.",
-                    true
+                LocationError.POSITION_UNAVAILABLE.getValue(),
+                "No location provider available.",
+                true
             );
             return;
         }
@@ -159,11 +159,11 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
             ? (float) options.getDouble("distanceFilter")
             : 0;
         mShowLocationDialog = options.hasKey("showLocationDialog")
-                ? options.getBoolean("showLocationDialog")
-                : true;
+            ? options.getBoolean("showLocationDialog")
+            : true;
         mForceRequestLocation = options.hasKey("forceRequestLocation")
-                ? options.getBoolean("forceRequestLocation")
-                : true;
+            ? options.getBoolean("forceRequestLocation")
+            : false;
 
         LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
 
@@ -200,9 +200,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
 
         if (!LocationUtils.isLocationEnabled(context)) {
             invokeError(
-                    LocationError.POSITION_UNAVAILABLE.getValue(),
-                    "No location provider available.",
-                    false
+                LocationError.POSITION_UNAVAILABLE.getValue(),
+                "No location provider available.",
+                false
             );
             return;
         }
@@ -233,6 +233,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         mShowLocationDialog = options.hasKey("showLocationDialog")
             ? options.getBoolean("showLocationDialog")
             : true;
+        mForceRequestLocation = options.hasKey("forceRequestLocation")
+            ? options.getBoolean("forceRequestLocation")
+            : false;
 
         LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
 

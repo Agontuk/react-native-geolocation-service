@@ -39,7 +39,6 @@ public class LocationUtils {
             }
 
             return locationMode != Settings.Secure.LOCATION_MODE_OFF;
-
         } else {
             locationProviders = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
             return !TextUtils.isEmpty(locationProviders);
@@ -50,7 +49,7 @@ public class LocationUtils {
      * Check if google play service is available on device.
      */
     public static boolean isGooglePlayServicesAvailable(Context context) {
-        int result =  GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context);
+        int result = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context);
 
         // TODO: Handle other possible success types.
         return result == ConnectionResult.SUCCESS || result == ConnectionResult.SERVICE_UPDATING;
