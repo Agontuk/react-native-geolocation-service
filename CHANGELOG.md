@@ -1,5 +1,14 @@
 # Changelog
 
+### 3.0.0 (July 23, 2019)
+ - Fix typescript definition
+ - __BREAKING__: Switch to `@react-native-community/geolocation` library for iOS implementation (follow iOS setup instruction)
+ - Export `PositionError` constants
+ - Added `forceRequestLocation` flag to request location with only GPS enabled
+
+### 2.0.1 (May 5, 2019)
+ - Add typescript definition
+
 ### 2.0.0 (December 2, 2018)
  - Support RN 0.57+
 
