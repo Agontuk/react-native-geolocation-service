@@ -26,9 +26,23 @@ npm install react-native-geolocation-service
 # Setup
 
 ## iOS
-You need to include the `NSLocationWhenInUseUsageDescription` key in Info.plist to enable geolocation when using the app. Geolocation is enabled by default when you create a project with `react-native init`.
+You need to include the `NSLocationWhenInUseUsageDescription` key in Info.plist to enable geolocation when using the app. In order to enable geolocation in the background, you need to include the `NSLocationAlwaysUsageDescription` key in Info.plist and add location as a background mode in the 'Capabilities' tab in Xcode.
 
-In order to enable geolocation in the background, you need to include the 'NSLocationAlwaysUsageDescription' key in Info.plist and add location as a background mode in the 'Capabilities' tab in Xcode.
+<details>
+<summary>Manually link the library on iOS</summary>
+
+### `Open project.xcodeproj in Xcode`
+
+Drag `RNCGeolocation.xcodeproj` to your project on Xcode (usually under the Libraries group on Xcode):
+
+![xcode-add](screenshots/01-ios-add-to-library.png?raw=true)
+
+### Link `libRNCGeolocation.a` binary with libraries
+
+Click on your main project file (the one that represents the `.xcodeproj`) select `Build Phases` and drag the static library from the `Products` folder inside the Library you are importing to `Link Binary With Libraries` (or use the `+` sign and choose library from the list):
+
+![xcode-link](screenshots/02-ios-add-to-build-phases.png?raw=true)
+</details>
 
 ## Android
 1. In `android/app/build.gradle`
