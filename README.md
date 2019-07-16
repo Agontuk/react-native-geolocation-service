@@ -26,7 +26,9 @@ npm install react-native-geolocation-service
 # Setup
 
 ## iOS
-No additional setup is required, since it uses the React Native's default Geolocation API. Just follow the [React Native documentation](https://facebook.github.io/react-native/docs/geolocation.html#ios) to modify the `.plist` file.
+You need to include the `NSLocationWhenInUseUsageDescription` key in Info.plist to enable geolocation when using the app. Geolocation is enabled by default when you create a project with `react-native init`.
+
+In order to enable geolocation in the background, you need to include the 'NSLocationAlwaysUsageDescription' key in Info.plist and add location as a background mode in the 'Capabilities' tab in Xcode.
 
 ## Android
 1. In `android/app/build.gradle`
@@ -42,18 +44,19 @@ No additional setup is required, since it uses the React Native's default Geoloc
     If you've defined [project-wide properties](https://developer.android.com/studio/build/gradle-tips#configure-project-wide-properties) (recommended) in your root build.gradle, this library will detect the presence of the following properties:
 
     ```gradle
-    buildscript {...}
-    allprojects {...}
-
-    /**
-     + Project-wide Gradle configuration properties
-     */
-    ext {
-        compileSdkVersion   = 28
-        targetSdkVersion    = 28
-        buildToolsVersion   = "28.0.3"
-        supportLibVersion   = "28.0.0"
-        googlePlayServicesVersion = "11.0.0"
+    buildscript {
+        /**
+         + Project-wide Gradle configuration properties
+         */
+        ext {
+            compileSdkVersion   = 28
+            targetSdkVersion    = 28
+            buildToolsVersion   = "28.0.3"
+            supportLibVersion   = "28.0.0"
+            googlePlayServicesVersion = "16.0.0"
+        }
+        repositories { ... }
+        dependencies { ... }
     }
     ```
 
@@ -124,7 +127,7 @@ componentDidMount() {
 ```
 
 # API
-### `setRNConfiguration(options) (iOS only)`
+#### `setRNConfiguration(options) (iOS only)`
  - **options**:
 
     | Name | Type | Default | Description |
@@ -132,7 +135,7 @@ componentDidMount() {
     | skipPermissionRequests | `bool` | false | If `true`, you must request permissions before using Geolocation APIs. |
     | authorizationLevel | `string` | -- | Changes whether the user will be asked to give "always" or "when in use" location services permission. Any other value or `auto` will use the default behaviour, where the permission level is based on the contents of your `Info.plist`. Possible values are `whenInUse`, `always` and `auto`. |
 
-### `requestAuthorization() (iOS only)`
+#### `requestAuthorization() (iOS only)`
 Request suitable Location permission based on the key configured on pList. If NSLocationAlwaysUsageDescription is set, it will request Always authorization, although if NSLocationWhenInUseUsageDescription is set, it will request InUse authorization.
 
 #### `getCurrentPosition(successCallback, ?errorCallback, ?options)`
@@ -166,22 +169,18 @@ Request suitable Location permission based on the key configured on pList. If NS
 #### `clearWatch(watchId)`
  - watchId (id returned by `watchPosition`)
 
-### `stopObserving()`
+#### `stopObserving()`
 Stops observing for device location changes. In addition, it removes all listeners previously registered.
 
 # Error Codes
 | Name | Code | Description |
 | --- | --- | --- |
 | PERMISSION_DENIED | 1 | Location permission is not granted |
-| POSITION_UNAVAILABLE | 2 | Unable to determine position (not used yet) |
+| POSITION_UNAVAILABLE | 2 | Location provider not available |
 | TIMEOUT | 3 | Location request timed out |
 | PLAY_SERVICE_NOT_AVAILABLE | 4 | Google play service is not installed or has an older version |
 | SETTINGS_NOT_SATISFIED | 5 | Location service is not enabled or location mode is not appropriate for the current request |
 | INTERNAL_ERROR | -1 | Library crashed for some reason or the `getCurrentActivity()` returned null |
-
-# TODO
-- [x] Implement `watchPosition` & `clearWatch` methods for android
-- [x] Implement `stopObserving` method for android
 
 # FAQ
 1. **Location timeout still happening ?**
