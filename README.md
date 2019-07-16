@@ -49,10 +49,10 @@ No additional setup is required, since it uses the React Native's default Geoloc
      + Project-wide Gradle configuration properties
      */
     ext {
-        compileSdkVersion   = 25
-        targetSdkVersion    = 25
-        buildToolsVersion   = "25.0.2"
-        supportLibVersion   = "25.0.1"
+        compileSdkVersion   = 28
+        targetSdkVersion    = 28
+        buildToolsVersion   = "28.0.3"
+        supportLibVersion   = "28.0.0"
         googlePlayServicesVersion = "11.0.0"
     }
     ```
@@ -63,10 +63,10 @@ No additional setup is required, since it uses the React Native's default Geoloc
     ...
     dependencies {
         ...
-        compile(project(':react-native-geolocation-service')) {
+        implementation(project(':react-native-geolocation-service')) {
             exclude group: 'com.google.android.gms', module: 'play-services-location'
         }
-        compile 'com.google.android.gms:play-services-location:<insert your play service version here>'
+        implementation 'com.google.android.gms:play-services-location:<insert your play service version here>'
     }
     ```
 
@@ -124,6 +124,17 @@ componentDidMount() {
 ```
 
 # API
+### `setRNConfiguration(options) (iOS only)`
+ - **options**:
+
+    | Name | Type | Default | Description |
+    | -- | -- | -- | -- |
+    | skipPermissionRequests | `bool` | false | If `true`, you must request permissions before using Geolocation APIs. |
+    | authorizationLevel | `string` | -- | Changes whether the user will be asked to give "always" or "when in use" location services permission. Any other value or `auto` will use the default behaviour, where the permission level is based on the contents of your `Info.plist`. Possible values are `whenInUse`, `always` and `auto`. |
+
+### `requestAuthorization() (iOS only)`
+Request suitable Location permission based on the key configured on pList. If NSLocationAlwaysUsageDescription is set, it will request Always authorization, although if NSLocationWhenInUseUsageDescription is set, it will request InUse authorization.
+
 #### `getCurrentPosition(successCallback, ?errorCallback, ?options)`
  - **successCallback**: Invoked with latest location info.
  - **errorCallback**: Invoked whenever an error is encountered.
@@ -155,8 +166,8 @@ componentDidMount() {
 #### `clearWatch(watchId)`
  - watchId (id returned by `watchPosition`)
 
-Checkout [React Native documentation](https://facebook.github.io/react-native/docs/geolocation.html#reference) to see the list of available methods.
-
+### `stopObserving()`
+Stops observing for device location changes. In addition, it removes all listeners previously registered.
 
 # Error Codes
 | Name | Code | Description |
