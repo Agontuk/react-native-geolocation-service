@@ -4,6 +4,7 @@ declare module 'react-native-geolocation-service' {
     maximumAge?: number
     enableHighAccuracy?: boolean
     distanceFilter?: number
+    useSignificantChanges?: boolean
     showLocationDialog?: boolean,
     forceRequestLocation?: boolean
   }
@@ -35,22 +36,23 @@ declare module 'react-native-geolocation-service' {
   }
 
   export interface GeoCoordinates {
-    latitude?: number
-    longitude?: number
-    accuracy?: number
-    altitude?: number
-    heading?: number
-    speed?: number
-    altitudeAccuracy?: number
+    latitude: number
+    longitude: number
+    accuracy: number
+    altitude: number | null
+    heading: number | null
+    speed: number | null
+    altitudeAccuracy: number | null
   }
 
   export interface GeoPosition {
     coords: GeoCoordinates
-    timestamp: Date
+    timestamp: number
   }
 
   export interface GeoConfig {
-    skipPermissionRequests?: boolean
+    skipPermissionRequests: boolean
+    authorizationLevel: 'always' | 'whenInUse' | 'auto'
   }
 
   export function setRNConfiguration(config: GeoConfig): void
