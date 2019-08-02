@@ -1,3 +1,8 @@
 example/
 demo/
 screenshots/
+.DS_Store
+.editorconfig
+.eslintignore
+.eslintrc
+yarn.lock
