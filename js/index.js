@@ -28,14 +28,30 @@ if (Platform.OS === 'ios') {
 
         requestAuthorization: () => {},
 
-        getCurrentPosition: (options = {}) =>
-            new Promise((resolve, reject) => {
+        getCurrentPosition: function(param1, error = noop, options = {}) {
+            if (arguments.length === 1 && typeof arguments[0] === 'object') {
+                const configOptions = param1;
+                return new Promise((resolve, reject) => {
+                    RNFusedLocation.getCurrentPosition(
+                        configOptions,
+                        position => resolve(position),
+                        error => reject(error)
+                    );
+                });
+            } else if (arguments.length && typeof arguments[0] === 'function') {
+                const successCallback = param1;
+                // Right now, we're assuming user already granted location permission.
                 RNFusedLocation.getCurrentPosition(
                     options,
-                    position => resolve(position),
-                    error => reject(error)
+                    successCallback,
+                    error
                 );
-            }),
+            } else {
+                console.error(
+                    'Must provide a success callback or provide a configuration object'
+                );
+            }
+        },
 
         watchPosition: (success, error = null, options = {}) => {
             if (!success) {
