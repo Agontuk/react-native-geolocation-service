@@ -1,51 +1,51 @@
 {
-  "name": "react-native-geolocation-service",
-  "version": "3.0.0",
-  "description": "React native geolocation service for iOS and android",
-  "main": "js/index.js",
-  "scripts": {
-    "precommit": "lint-staged"
-  },
-  "keywords": [
-    "react-native",
-    "react",
-    "native",
-    "fused",
-    "location",
-    "geolocation",
-    "android",
-    "ios"
-  ],
-  "author": {
-    "name": "Iftekhar Rifat",
-    "email": "rifat662@gmail.com",
-    "url": "https://github.com/Agontuk"
-  },
-  "license": "MIT",
-  "homepage": "https://github.com/Agontuk/react-native-geolocation-service",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Agontuk/react-native-geolocation-service"
-  },
-  "dependencies": {
-    "@react-native-community/geolocation": "^1.4.2"
-  },
-  "devDependencies": {
-    "babel-eslint": "^7.2.3",
-    "eslint": "^4.4.1",
-    "eslint-config-airbnb": "^15.1.0",
-    "eslint-plugin-import": "^2.7.0",
-    "eslint-plugin-jsx-a11y": "^6.0.2",
-    "eslint-plugin-react": "^7.1.0",
-    "husky": "^0.14.3",
-    "lint-staged": "^4.0.3",
-    "react": "16.5.0",
-    "react-native": "0.57.0"
-  },
-  "lint-staged": {
-    "*.js": [
-      "eslint",
-      "git add"
-    ]
-  }
+    "name": "react-native-geolocation-service",
+    "version": "3.1.0",
+    "description": "React native geolocation service for iOS and android",
+    "main": "js/index.js",
+    "scripts": {
+        "precommit": "lint-staged"
+    },
+    "keywords": [
+        "react-native",
+        "react",
+        "native",
+        "fused",
+        "location",
+        "geolocation",
+        "android",
+        "ios"
+    ],
+    "author": {
+        "name": "Iftekhar Rifat",
+        "email": "rifat662@gmail.com",
+        "url": "https://github.com/Agontuk"
+    },
+    "license": "MIT",
+    "homepage": "https://github.com/Agontuk/react-native-geolocation-service",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Agontuk/react-native-geolocation-service"
+    },
+    "dependencies": {
+        "@react-native-community/geolocation": "^1.4.2"
+    },
+    "devDependencies": {
+        "babel-eslint": "^7.2.3",
+        "eslint": "^4.4.1",
+        "eslint-config-airbnb": "^15.1.0",
+        "eslint-plugin-import": "^2.7.0",
+        "eslint-plugin-jsx-a11y": "^6.0.2",
+        "eslint-plugin-react": "^7.1.0",
+        "husky": "^0.14.3",
+        "lint-staged": "^4.0.3",
+        "react": "16.5.0",
+        "react-native": "0.57.0"
+    },
+    "lint-staged": {
+        "*.js": [
+            "eslint",
+            "git add"
+        ]
+    }
 }
