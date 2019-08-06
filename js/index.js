@@ -34,7 +34,7 @@ if (Platform.OS === 'ios') {
             options = {}
         ) {
             if (arguments.length === 1 && typeof arguments[0] === 'object') {
-                const configOptions = param1;
+                const configOptions = param1 || {};
                 return new Promise((resolve, reject) => {
                     RNFusedLocation.getCurrentPosition(
                         configOptions,

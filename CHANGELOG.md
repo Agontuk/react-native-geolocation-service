@@ -1,6 +1,6 @@
 # Changelog
 
-### 3.1.0 (July 23, 2019)
+### 3.1.0 (August 06, 2019)
 
 -   Promise based support added for `getCurrentPosition` method. This is also backward compatible i.e. you can pass first param as `successCallback` to use in a callback way or you can pass first param as `options` to use as promise based.
 

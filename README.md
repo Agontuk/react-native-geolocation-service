@@ -1,43 +1,50 @@
 # react-native-geolocation-service
+
 React native geolocation service for iOS and android.
 
 # Why ?
+
 This library is created in an attempt to fix the location timeout issue on android with the react-native's current implementation of Geolocation API. This library tries to solve the issue by using Google Play Service's new `FusedLocationProviderClient` API, which Google strongly recommends over android's default framework location API. It automatically decides which provider to use based on your request configuration and also prompts you to change the location mode if it doesn't satisfy your current request configuration.
 
 > NOTE: Location request can still timeout since many android devices have GPS issue in the hardware level or in the system software level. Check the [FAQ](#faq) for more details.
 
 # Installation
+
 yarn
+
 ```bash
 yarn add react-native-geolocation-service
 ```
 
 npm
+
 ```bash
 npm install react-native-geolocation-service
 ```
 
 # Compatibility
+
 | RN Version | Package Version |
 | ---------- | --------------- |
-| 0.60+      | 3.0.0           |
+| 0.60+      | 3.x             |
 | 0.57+      | 2.0.0           |
 | <0.57      | 1.1.0           |
 
 # Setup
 
 ## iOS
+
 You need to include the `NSLocationWhenInUseUsageDescription` key in Info.plist to enable geolocation when using the app. In order to enable geolocation in the background, you need to include the `NSLocationAlwaysUsageDescription` key in Info.plist and add location as a background mode in the 'Capabilities' tab in Xcode.
 
 <details>
 <summary>0.60 or higher</summary>
 
- - Update your `Podfile`
+-   Update your `Podfile`
     ```
     pod 'react-native-geolocation', path: '../node_modules/@react-native-community/geolocation'
     ```
- - Then run `pod install` from ios directory
-</details>
+-   Then run `pod install` from ios directory
+    </details>
 
 <details>
 <summary>0.59 or below</summary>
@@ -57,21 +64,23 @@ Click on your main project file (the one that represents the `.xcodeproj`) selec
 ![xcode-link](screenshots/02-ios-add-to-build-phases.png?raw=true)
 
 ### Using Cocoapods
-- Update your `Podfile`
+
+-   Update your `Podfile`
     ```
     pod 'react-native-geolocation', path: '../node_modules/@react-native-community/geolocation'
     ```
- - Then run `pod install` from ios directory
+-   Then run `pod install` from ios directory
 
 </details>
 
 ## Android
-__No additional setup is required for 0.60 or above.__
+
+**No additional setup is required for 0.60 or above.**
 
 <details>
 <summary>0.59 or below</summary>
 
-1. In `android/app/build.gradle`
+1.  In `android/app/build.gradle`
 
     ```gradle
     ...
@@ -100,7 +109,7 @@ __No additional setup is required for 0.60 or above.__
     }
     ```
 
-    If you do not have *project-wide properties* defined and have a different play-services version than the one included in this library, use the following instead. But play service version should be `11+` or the library won't work.
+    If you do not have _project-wide properties_ defined and have a different play-services version than the one included in this library, use the following instead. But play service version should be `11+` or the library won't work.
 
     ```gradle
     ...
@@ -113,7 +122,7 @@ __No additional setup is required for 0.60 or above.__
     }
     ```
 
-2. In `android/setting.gradle`
+2.  In `android/setting.gradle`
 
     ```gradle
     ...
@@ -121,29 +130,35 @@ __No additional setup is required for 0.60 or above.__
     project(':react-native-geolocation-service').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-geolocation-service/android')
     ```
 
-3. In `MainApplication.java`
+3.  In `MainApplication.java`
 
-    ```java
-    ...
-    import com.agontuk.RNFusedLocation.RNFusedLocationPackage;
-
-    public class MainApplication extends Application implements ReactApplication {
+        ```java
         ...
-        @Override
-        protected List<ReactPackage> getPackages() {
-            return Arrays.<ReactPackage>asList(
-                ...
-                new RNFusedLocationPackage()
-            );
+        import com.agontuk.RNFusedLocation.RNFusedLocationPackage;
+
+        public class MainApplication extends Application implements ReactApplication {
+            ...
+            @Override
+            protected List<ReactPackage> getPackages() {
+                return Arrays.<ReactPackage>asList(
+                    ...
+                    new RNFusedLocationPackage()
+                );
+            }
         }
-    }
-    ```
-</details>
+        ```
+
+    </details>
 
 # Usage
+
 Since this library was meant to be a drop-in replacement for the RN's Geolocation API, the usage is pretty straight forward, with some extra error cases to handle.
 
 > One thing to note, this library assumes that location permission is already granted by the user, so you have to use `PermissionsAndroid` to request for permission before making the location request.
+
+### As promise based
+
+First param of the `getCurrentPosition` must be options if you wish to use a promise based API.
 
 ```js
 ...
@@ -152,6 +167,30 @@ import Geolocation from 'react-native-geolocation-service';
 
 componentDidMount() {
     // Instead of navigator.geolocation, just use Geolocation.
+    // pass the first param as configuration object if you wish to use as a promise based
+    if (hasLocationPermission) {
+        Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }).then(position => {
+            console.log(position)
+        })
+        .catch(error => {
+            console.log(error)
+        });
+    }
+}
+```
+
+### As callback style
+
+First param of the `getCurrentPosition` must be success callback if you wish to use a callback based API.
+
+```js
+...
+import Geolocation from 'react-native-geolocation-service';
+...
+
+componentDidMount() {
+    // Instead of navigator.geolocation, just use Geolocation.
+    // pass the first param as success callBack if you wish to use as a callback based
     if (hasLocationPermission) {
         Geolocation.getCurrentPosition(
             (position) => {
@@ -168,65 +207,75 @@ componentDidMount() {
 ```
 
 # API
-#### `setRNConfiguration(options) (iOS only)`
- - **options**:
 
-    | Name | Type | Default | Description |
-    | -- | -- | -- | -- |
-    | skipPermissionRequests | `bool` | false | If `true`, you must request permissions before using Geolocation APIs. |
-    | authorizationLevel | `string` | -- | Changes whether the user will be asked to give "always" or "when in use" location services permission. Any other value or `auto` will use the default behaviour, where the permission level is based on the contents of your `Info.plist`. Possible values are `whenInUse`, `always` and `auto`. |
+#### `setRNConfiguration(options) (iOS only)`
+
+-   **options**:
+
+    | Name                   | Type     | Default | Description                                                                                                                                                                                                                                                                                      |
+    | ---------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+    | skipPermissionRequests | `bool`   | false   | If `true`, you must request permissions before using Geolocation APIs.                                                                                                                                                                                                                           |
+    | authorizationLevel     | `string` | --      | Changes whether the user will be asked to give "always" or "when in use" location services permission. Any other value or `auto` will use the default behaviour, where the permission level is based on the contents of your `Info.plist`. Possible values are `whenInUse`, `always` and `auto`. |
 
 #### `requestAuthorization() (iOS only)`
+
 Request suitable Location permission based on the key configured on pList. If NSLocationAlwaysUsageDescription is set, it will request Always authorization, although if NSLocationWhenInUseUsageDescription is set, it will request InUse authorization.
 
 #### `getCurrentPosition(successCallback, ?errorCallback, ?options)`
- - **successCallback**: Invoked with latest location info.
- - **errorCallback**: Invoked whenever an error is encountered.
- - **options**:
 
-    | Name | Type | Default | Description |
-    | -- | -- | -- | -- |
-    | timeout | `ms` | -- | Request timeout |
-    | maximumAge | `ms` | `INFINITY` | How long previous location will be cached |
-    | enableHighAccuracy | `bool` | `false` | Use high accuracy mode
-    | distanceFilter | `m` | `0` | Minimum displacement in meters
-    | showLocationDialog | `bool` | `true` | Whether to ask to enable location in Android
-    | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog
+-   **successCallback**: Invoked with latest location info.
+-   **errorCallback**: Invoked whenever an error is encountered.
+-   **options**:
+
+    | Name                 | Type   | Default    | Description                                                       |
+    | -------------------- | ------ | ---------- | ----------------------------------------------------------------- |
+    | timeout              | `ms`   | --         | Request timeout                                                   |
+    | maximumAge           | `ms`   | `INFINITY` | How long previous location will be cached                         |
+    | enableHighAccuracy   | `bool` | `false`    | Use high accuracy mode                                            |
+    | distanceFilter       | `m`    | `0`        | Minimum displacement in meters                                    |
+    | showLocationDialog   | `bool` | `true`     | Whether to ask to enable location in Android                      |
+    | forceRequestLocation | `bool` | `false`    | Force request location even after denying improve accuracy dialog |
 
 #### `watchPosition(successCallback, ?errorCallback, ?options)`
- - **successCallback**: Invoked with latest location info.
- - **errorCallback**: Invoked whenever an error is encountered.
- - **options**:
 
-    | Name | Type | Default | Description |
-    | -- | -- | -- | -- |
-    | enableHighAccuracy | `bool` | `false` | Use high accuracy mode
-    | distanceFilter | `m` | `100` | Minimum displacement between location updates in meters
-    | interval | `ms` | `10000` |  Interval for active location updates
-    | fastestInterval | `ms` | `5000` | Fastest rate at which your application will receive location updates, which might be faster than `interval` in some situations (for example, if other applications are triggering location updates)
-    | showLocationDialog | `bool` | `true` | whether to ask to enable location in Android
-    | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog
+-   **successCallback**: Invoked with latest location info.
+-   **errorCallback**: Invoked whenever an error is encountered.
+-   **options**:
+
+    | Name                 | Type   | Default | Description                                                                                                                                                                                         |
+    | -------------------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | enableHighAccuracy   | `bool` | `false` | Use high accuracy mode                                                                                                                                                                              |
+    | distanceFilter       | `m`    | `100`   | Minimum displacement between location updates in meters                                                                                                                                             |
+    | interval             | `ms`   | `10000` | Interval for active location updates                                                                                                                                                                |
+    | fastestInterval      | `ms`   | `5000`  | Fastest rate at which your application will receive location updates, which might be faster than `interval` in some situations (for example, if other applications are triggering location updates) |
+    | showLocationDialog   | `bool` | `true`  | whether to ask to enable location in Android                                                                                                                                                        |
+    | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog                                                                                                                                   |
 
 #### `clearWatch(watchId)`
- - watchId (id returned by `watchPosition`)
+
+-   watchId (id returned by `watchPosition`)
 
 #### `stopObserving()`
+
 Stops observing for device location changes. In addition, it removes all listeners previously registered.
 
 # Error Codes
-| Name | Code | Description |
-| --- | --- | --- |
-| PERMISSION_DENIED | 1 | Location permission is not granted |
-| POSITION_UNAVAILABLE | 2 | Location provider not available |
-| TIMEOUT | 3 | Location request timed out |
-| PLAY_SERVICE_NOT_AVAILABLE | 4 | Google play service is not installed or has an older version |
-| SETTINGS_NOT_SATISFIED | 5 | Location service is not enabled or location mode is not appropriate for the current request |
-| INTERNAL_ERROR | -1 | Library crashed for some reason or the `getCurrentActivity()` returned null |
+
+| Name                       | Code | Description                                                                                 |
+| -------------------------- | ---- | ------------------------------------------------------------------------------------------- |
+| PERMISSION_DENIED          | 1    | Location permission is not granted                                                          |
+| POSITION_UNAVAILABLE       | 2    | Location provider not available                                                             |
+| TIMEOUT                    | 3    | Location request timed out                                                                  |
+| PLAY_SERVICE_NOT_AVAILABLE | 4    | Google play service is not installed or has an older version                                |
+| SETTINGS_NOT_SATISFIED     | 5    | Location service is not enabled or location mode is not appropriate for the current request |
+| INTERNAL_ERROR             | -1   | Library crashed for some reason or the `getCurrentActivity()` returned null                 |
 
 # FAQ
+
 1. **Location timeout still happening ?**
 
     Try the following steps: (Taken from [here](https://support.strava.com/hc/en-us/articles/216918967-Troubleshooting-GPS-Issues))
+
     - Turn phone off/on
     - Turn GPS off/on
     - Disable any battery saver settings, including Power Saving Mode, Battery Management or any third party apps
