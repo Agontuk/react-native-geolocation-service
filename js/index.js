@@ -24,19 +24,18 @@ if (Platform.OS === 'ios') {
     const LocationEventEmitter = new NativeEventEmitter(RNFusedLocation);
 
     Geolocation = {
-        setRNConfiguration: (config) => {}, // eslint-disable-line no-unused-vars
+        setRNConfiguration: config => {}, // eslint-disable-line no-unused-vars
 
         requestAuthorization: () => {},
 
-        getCurrentPosition: async (success, error = noop, options = {}) => {
-            if (!success) {
-                // eslint-disable-next-line no-console
-                console.error('Must provide a success callback');
-            }
-
-            // Right now, we're assuming user already granted location permission.
-            RNFusedLocation.getCurrentPosition(options, success, error);
-        },
+        getCurrentPosition: (options = {}) =>
+            new Promise((resolve, reject) => {
+                RNFusedLocation.getCurrentPosition(
+                    options,
+                    position => resolve(position),
+                    error => reject(error)
+                );
+            }),
 
         watchPosition: (success, error = null, options = {}) => {
             if (!success) {
@@ -52,14 +51,22 @@ if (Platform.OS === 'ios') {
             const watchID = subscriptions.length;
 
             subscriptions.push([
-                LocationEventEmitter.addListener('geolocationDidChange', success),
-                error ? LocationEventEmitter.addListener('geolocationError', error) : null
+                LocationEventEmitter.addListener(
+                    'geolocationDidChange',
+                    success
+                ),
+                error
+                    ? LocationEventEmitter.addListener(
+                          'geolocationError',
+                          error
+                      )
+                    : null
             ]);
 
             return watchID;
         },
 
-        clearWatch: (watchID) => {
+        clearWatch: watchID => {
             const sub = subscriptions[watchID];
 
             if (!sub) {
@@ -100,7 +107,9 @@ if (Platform.OS === 'ios') {
                     const sub = subscriptions[ii];
                     if (sub) {
                         // eslint-disable-next-line no-console
-                        console.warn('Called stopObserving with existing subscriptions.');
+                        console.warn(
+                            'Called stopObserving with existing subscriptions.'
+                        );
                         sub[0].remove();
 
                         const sub1 = sub[1];
