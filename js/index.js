@@ -28,7 +28,11 @@ if (Platform.OS === 'ios') {
 
         requestAuthorization: () => {},
 
-        getCurrentPosition: function(param1, error = noop, options = {}) {
+        getCurrentPosition: function(
+            param1,
+            errorCallback = noop,
+            options = {}
+        ) {
             if (arguments.length === 1 && typeof arguments[0] === 'object') {
                 const configOptions = param1;
                 return new Promise((resolve, reject) => {
@@ -44,7 +48,7 @@ if (Platform.OS === 'ios') {
                 RNFusedLocation.getCurrentPosition(
                     options,
                     successCallback,
-                    error
+                    errorCallback
                 );
             } else {
                 console.error(
