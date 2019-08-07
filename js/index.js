@@ -43,7 +43,7 @@ if (Platform.OS === 'ios') {
             options = {}
         ) {
             if (arguments.length === 1 && typeof arguments[0] === 'object') {
-                return currentPosition(arguments[0]);
+                return this.currentPosition(arguments[0]);
             } else if (arguments.length && typeof arguments[0] === 'function') {
                 const successCallback = param1;
                 // Right now, we're assuming user already granted location permission.
@@ -53,7 +53,7 @@ if (Platform.OS === 'ios') {
                     errorCallback
                 );
             } else {
-                return currentPosition();
+                return this.currentPosition();
             }
         },
 
