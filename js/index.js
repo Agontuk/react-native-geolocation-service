@@ -19,6 +19,36 @@ export const PositionError = Object.freeze({
 if (Platform.OS === 'ios') {
     // eslint-disable-next-line global-require
     Geolocation = require('@react-native-community/geolocation');
+
+    const { getCurrentPosition: iosGetCurrentPosition } = Geolocation;
+
+    const currentPosition = (configOptions = {}) =>
+    new Promise((resolve, reject) => {
+        iosGetCurrentPosition(
+            configOptions,
+            position => resolve(position),
+            error => reject(error)
+        );
+    }),
+
+    const getCurrentPosition = function(
+        param1,
+        errorCallback = noop,
+        options = {}
+    ) {
+        if (arguments.length === 1 && typeof arguments[0] === 'object') {
+            return currentPosition(arguments[0]);
+        } else if (arguments.length && typeof arguments[0] === 'function') {
+            const successCallback = param1;
+            // Right now, we're assuming user already granted location permission.
+            iosGetCurrentPosition(options, successCallback, errorCallback);
+        } else {
+            return currentPosition();
+        }
+    };
+
+    Geolocation.currentPosition = currentPosition;
+    Geolocation.getCurrentPosition = getCurrentPosition;
 } else if (Platform.OS === 'android') {
     const { RNFusedLocation } = NativeModules;
     const LocationEventEmitter = new NativeEventEmitter(RNFusedLocation);
