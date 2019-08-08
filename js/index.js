@@ -23,13 +23,13 @@ if (Platform.OS === 'ios') {
     const { getCurrentPosition: iosGetCurrentPosition } = Geolocation;
 
     const currentPosition = (configOptions = {}) =>
-    new Promise((resolve, reject) => {
-        iosGetCurrentPosition(
-            configOptions,
-            position => resolve(position),
-            error => reject(error)
-        );
-    }),
+        new Promise((resolve, reject) => {
+            iosGetCurrentPosition(
+                configOptions,
+                position => resolve(position),
+                error => reject(error)
+            );
+        });
 
     const getCurrentPosition = function(
         param1,
