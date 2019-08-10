@@ -16,10 +16,10 @@ export const PositionError = Object.freeze({
     INTERNAL_ERROR: -1
 });
 
-if (Platform.OS === 'ios') {
+if (Platform.OS !== 'android') {
     // eslint-disable-next-line global-require
     Geolocation = require('@react-native-community/geolocation');
-} else if (Platform.OS === 'android') {
+} else {
     const { RNFusedLocation } = NativeModules;
     const LocationEventEmitter = new NativeEventEmitter(RNFusedLocation);
 
