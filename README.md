@@ -186,12 +186,13 @@ Request suitable Location permission based on the key configured on pList. If NS
 
     | Name | Type | Default | Description |
     | -- | -- | -- | -- |
-    | timeout | `ms` | -- | Request timeout |
+    | timeout | `ms` | `INFINITY` | Request timeout |
     | maximumAge | `ms` | `INFINITY` | How long previous location will be cached |
     | enableHighAccuracy | `bool` | `false` | Use high accuracy mode
     | distanceFilter | `m` | `0` | Minimum displacement in meters
-    | showLocationDialog | `bool` | `true` | Whether to ask to enable location in Android
-    | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog
+    | showLocationDialog | `bool` | `true` | Whether to ask to enable location in Android (android only)
+    | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog (android only)
+    | useSignificantChanges | `bool` | false | Uses the battery-efficient native significant changes APIs to return locations. Locations will only be returned when the device detects a significant distance has been breached (iOS only)
 
 #### `watchPosition(successCallback, ?errorCallback, ?options)`
  - **successCallback**: Invoked with latest location info.
@@ -202,10 +203,11 @@ Request suitable Location permission based on the key configured on pList. If NS
     | -- | -- | -- | -- |
     | enableHighAccuracy | `bool` | `false` | Use high accuracy mode
     | distanceFilter | `m` | `100` | Minimum displacement between location updates in meters
-    | interval | `ms` | `10000` |  Interval for active location updates
-    | fastestInterval | `ms` | `5000` | Fastest rate at which your application will receive location updates, which might be faster than `interval` in some situations (for example, if other applications are triggering location updates)
-    | showLocationDialog | `bool` | `true` | whether to ask to enable location in Android
-    | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog
+    | interval | `ms` | `10000` |  Interval for active location updates (android only)
+    | fastestInterval | `ms` | `5000` | Fastest rate at which your application will receive location updates, which might be faster than `interval` in some situations (for example, if other applications are triggering location updates) (android only)
+    | showLocationDialog | `bool` | `true` | whether to ask to enable location in Android (android only)
+    | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog (android only)
+    | useSignificantChanges | `bool` | false | Uses the battery-efficient native significant changes APIs to return locations. Locations will only be returned when the device detects a significant distance has been breached (iOS only)
 
 #### `clearWatch(watchId)`
  - watchId (id returned by `watchPosition`)
@@ -219,9 +221,9 @@ Stops observing for device location changes. In addition, it removes all listene
 | PERMISSION_DENIED | 1 | Location permission is not granted |
 | POSITION_UNAVAILABLE | 2 | Location provider not available |
 | TIMEOUT | 3 | Location request timed out |
-| PLAY_SERVICE_NOT_AVAILABLE | 4 | Google play service is not installed or has an older version |
-| SETTINGS_NOT_SATISFIED | 5 | Location service is not enabled or location mode is not appropriate for the current request |
-| INTERNAL_ERROR | -1 | Library crashed for some reason or the `getCurrentActivity()` returned null |
+| PLAY_SERVICE_NOT_AVAILABLE | 4 | Google play service is not installed or has an older version (android only) |
+| SETTINGS_NOT_SATISFIED | 5 | Location service is not enabled or location mode is not appropriate for the current request (android only) |
+| INTERNAL_ERROR | -1 | Library crashed for some reason or the `getCurrentActivity()` returned null (android only) |
 
 # FAQ
 1. **Location timeout still happening ?**
