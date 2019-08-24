@@ -62,27 +62,57 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         @Override
         public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent intent) {
             if (requestCode == REQUEST_SETTINGS_SINGLE_UPDATE) {
-                if (resultCode == Activity.RESULT_OK || mForceRequestLocation) {
+                if (resultCode == Activity.RESULT_OK) {
                     // Location settings changed successfully, request user location.
                     getUserLocation();
-                } else if (resultCode == Activity.RESULT_CANCELED) {
+                    return;
+                }
+
+                if (!mForceRequestLocation) {
                     invokeError(
                         LocationError.SETTINGS_NOT_SATISFIED.getValue(),
                         "Location settings are not satisfied.",
                         true
                     );
+                    return;
                 }
+
+                if (!LocationUtils.isLocationEnabled(getContext())) {
+                    invokeError(
+                        LocationError.POSITION_UNAVAILABLE.getValue(),
+                        "No location provider available.",
+                        true
+                    );
+                    return;
+                }
+
+                getUserLocation();
             } else if (requestCode == REQUEST_SETTINGS_CONTINUOUS_UPDATE) {
-                if (resultCode == Activity.RESULT_OK || mForceRequestLocation) {
+                if (resultCode == Activity.RESULT_OK ) {
                     // Location settings changed successfully, request user location.
                     getLocationUpdates();
-                } else if (resultCode == Activity.RESULT_CANCELED) {
+                    return;
+                }
+
+                if (!mForceRequestLocation) {
                     invokeError(
                         LocationError.SETTINGS_NOT_SATISFIED.getValue(),
                         "Location settings are not satisfied.",
                         false
                     );
+                    return;
                 }
+
+                if (!LocationUtils.isLocationEnabled(getContext())) {
+                    invokeError(
+                        LocationError.POSITION_UNAVAILABLE.getValue(),
+                        "No location provider available.",
+                        false
+                    );
+                    return;
+                }
+
+                getLocationUpdates();
             }
         }
     };
@@ -122,15 +152,6 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
             invokeError(
                 LocationError.PERMISSION_DENIED.getValue(),
                 "Location permission not granted.",
-                true
-            );
-            return;
-        }
-
-        if (!LocationUtils.isLocationEnabled(context)) {
-            invokeError(
-                LocationError.POSITION_UNAVAILABLE.getValue(),
-                "No location provider available.",
                 true
             );
             return;
