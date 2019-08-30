@@ -1,5 +1,9 @@
 # Changelog
 
+### 3.1.0 (August 30, 2019)
+ - Add support for web
+ - Update location request flow ([described here](https://github.com/Agontuk/react-native-geolocation-service/issues/108#issuecomment-524217651))
+
 ### 3.0.0 (July 23, 2019)
  - Fix typescript definition
  - __BREAKING__: Switch to `@react-native-community/geolocation` library for iOS implementation (follow iOS setup instruction)
