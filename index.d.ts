@@ -48,6 +48,7 @@ declare module 'react-native-geolocation-service' {
   export interface GeoPosition {
     coords: GeoCoordinates
     timestamp: number
+    mocked?: boolean;
   }
 
   export interface GeoConfig {
