@@ -29,7 +29,7 @@ npm install react-native-geolocation-service
 ## iOS
 You need to include the `NSLocationWhenInUseUsageDescription` key in Info.plist to enable geolocation when using the app. In order to enable geolocation in the background, you need to include the `NSLocationAlwaysUsageDescription` key in Info.plist and add location as a background mode in the 'Capabilities' tab in Xcode.
 
-> NOTE: This library uses @react-native-community/geolocation under the hood for iOS. It'll be installed along with this library, the following instruction describes how to integrate it in your project.
+> NOTE: This library uses [@react-native-community/geolocation](https://github.com/react-native-community/react-native-geolocation) under the hood for iOS. It'll be installed along with this library, the following instruction describes how to integrate it in your project.
 
 <details>
 <summary>0.60 or higher</summary>
