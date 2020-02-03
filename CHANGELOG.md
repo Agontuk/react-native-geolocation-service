@@ -1,5 +1,9 @@
 # Changelog
 
+### 4.0.0 (February 3, 2020)
+ - Android: update android support library to androidx
+ - Android: fix ApiException handling in getLastLocation method
+
 ### 3.1.0 (August 30, 2019)
  - Add support for web
  - Update location request flow ([described here](https://github.com/Agontuk/react-native-geolocation-service/issues/108#issuecomment-524217651))

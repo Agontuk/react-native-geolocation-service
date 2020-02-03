@@ -20,7 +20,7 @@ npm install react-native-geolocation-service
 # Compatibility
 | RN Version | Package Version |
 | ---------- | --------------- |
-| 0.60+      | 3.0.0           |
+| 0.60+      | >=3.0.0         |
 | 0.57+      | 2.0.0           |
 | <0.57      | 1.1.0           |
 
