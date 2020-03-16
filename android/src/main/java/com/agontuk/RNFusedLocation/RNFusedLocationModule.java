@@ -219,15 +219,6 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
             return;
         }
 
-        if (!LocationUtils.isLocationEnabled(context)) {
-            invokeError(
-                LocationError.POSITION_UNAVAILABLE.getValue(),
-                "No location provider available.",
-                false
-            );
-            return;
-        }
-
         if (!LocationUtils.isGooglePlayServicesAvailable(context)) {
             invokeError(
                 LocationError.PLAY_SERVICE_NOT_AVAILABLE.getValue(),
