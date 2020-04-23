@@ -3,7 +3,11 @@
 
 @interface RCT_EXTERN_MODULE(RNFusedLocation, RCTEventEmitter)
 
-RCT_EXTERN_METHOD(requestAuthorization:(NSString *)level)
+RCT_EXTERN_METHOD(
+  requestAuthorization:(NSString *)level
+               resolve:(RCTPromiseResolveBlock)resolve
+                reject:(RCTPromiseRejectBlock)reject
+)
 
 RCT_EXTERN_METHOD(
   getCurrentPosition:(NSDictionary *)options
