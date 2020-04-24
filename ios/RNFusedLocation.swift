@@ -39,26 +39,6 @@ class RNFusedLocation: RCTEventEmitter {
     locationManager.delegate = nil;
   }
 
-  // MARK: RCTBridgeModule
-  override static func requiresMainQueueSetup() -> Bool {
-    return false
-  }
-
-  // MARK: RCTEventEmitter
-  override func supportedEvents() -> [String]! {
-    return ["geolocationDidChange", "geolocationError"]
-  }
-
-  // MARK: RCTEventEmitter
-  override func startObserving() -> Void {
-    hasListeners = true
-  }
-
-  // MARK: RCTEventEmitter
-  override func stopObserving() -> Void {
-    hasListeners = false
-  }
-
   // MARK: Bridge Method
   @objc func requestAuthorization(
     _ level: String,
@@ -149,6 +129,31 @@ class RNFusedLocation: RCTEventEmitter {
           NSLog("Invalid authorization level provided")
       }
     #endif
+  }
+}
+
+// MARK: RCTBridgeModule, RCTEventEmitter overrides
+extension RNFusedLocation {
+  override var methodQueue: DispatchQueue {
+    get {
+      return DispatchQueue.main
+    }
+  }
+
+  override static func requiresMainQueueSetup() -> Bool {
+    return false
+  }
+
+  override func supportedEvents() -> [String]! {
+    return ["geolocationDidChange", "geolocationError"]
+  }
+
+  override func startObserving() -> Void {
+    hasListeners = true
+  }
+
+  override func stopObserving() -> Void {
+    hasListeners = false
   }
 }
 
