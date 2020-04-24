@@ -72,6 +72,20 @@ class RNFusedLocation: RCTEventEmitter {
       return
     }
 
+    switch CLLocationManager.authorizationStatus() {
+      case .authorizedWhenInUse, .authorizedAlways:
+        resolve(AuthorizationStatus.granted.rawValue)
+        return
+      case .denied:
+        resolve(AuthorizationStatus.denied.rawValue)
+        return
+      case .restricted:
+        resolve(AuthorizationStatus.restricted.rawValue)
+        return
+      default:
+        break
+    }
+
     resolveAuthorizationStatus = resolve
 
     if level == "whileInUse" {
@@ -172,7 +186,6 @@ extension RNFusedLocation: CLLocationManagerDelegate {
       ],
       "timestamp": location.timestamp.timeIntervalSince1970 * 1000 // ms
     ]
-
 
     if hasListeners && observing {
       sendEvent(withName: "geolocationDidChange", body: locationData)
