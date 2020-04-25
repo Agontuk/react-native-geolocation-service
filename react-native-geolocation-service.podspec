@@ -11,8 +11,10 @@ Pod::Spec.new do |s|
   s.authors      = package["author"]
   s.platforms    = { :ios => "9.0" }
 
-  s.source       = { :git => "https://github.com/Agontuk/react-native-geolocation-service.git", :tag => "#{s.version}" }
+  s.source       = { :git => "https://github.com/Agontuk/react-native-geolocation-service.git", :tag => "v#{s.version}" }
   s.source_files = "ios/**/*.{h,m,swift}"
+
+  s.swift_version = "5.0"
 
   s.dependency "React"
 end
