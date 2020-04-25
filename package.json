@@ -27,9 +27,7 @@
     "type": "git",
     "url": "https://github.com/Agontuk/react-native-geolocation-service"
   },
-  "dependencies": {
-    "@react-native-community/geolocation": "^1.4.2"
-  },
+  "dependencies": {},
   "devDependencies": {
     "babel-eslint": "^7.2.3",
     "eslint": "^4.4.1",
