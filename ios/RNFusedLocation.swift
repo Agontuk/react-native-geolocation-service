@@ -70,7 +70,7 @@ class RNFusedLocation: RCTEventEmitter {
 
     resolveAuthorizationStatus = resolve
 
-    if level == "whileInUse" {
+    if level == "whenInUse" {
       locationManager.requestWhenInUseAuthorization()
     } else if level == "always" {
       locationManager.requestAlwaysAuthorization()
@@ -131,7 +131,7 @@ class RNFusedLocation: RCTEventEmitter {
       let key3 = Bundle.main.object(forInfoDictionaryKey: "NSLocationAlwaysAndWhenInUseUsageDescription")
 
       switch authorizationLevel {
-        case "whileInUse":
+        case "whenInUse":
           if key1 == nil {
             NSLog("NSLocationWhenInUseUsageDescription key must be present in Info.plist")
           }
