@@ -1,24 +1,24 @@
 declare module 'react-native-geolocation-service' {
-  interface GeoOptions {
-    timeout?: number
-    maximumAge?: number
+  export type AuthorizationLevel = 'always' | 'whenInUse'
+
+  export type AuthorizationResult = 'disabled' | 'granted' | 'denied' | 'restricted'
+
+  interface BaseOptions {
     enableHighAccuracy?: boolean
     distanceFilter?: number
-    useSignificantChanges?: boolean
     showLocationDialog?: boolean,
     forceRequestLocation?: boolean
   }
 
-  interface GeoWatchOptions {
+  interface GeoOptions extends BaseOptions {
     timeout?: number
     maximumAge?: number
-    enableHighAccuracy?: boolean
-    distanceFilter?: number
-    useSignificantChanges?: boolean
+  }
+
+  interface GeoWatchOptions extends BaseOptions {
     interval?: number
     fastestInterval?: number
-    showLocationDialog?: boolean,
-    forceRequestLocation?: boolean
+    useSignificantChanges?: boolean
   }
 
   export enum PositionError {
@@ -51,19 +51,19 @@ declare module 'react-native-geolocation-service' {
     mocked?: boolean;
   }
 
-  export interface GeoConfig {
-    skipPermissionRequests: boolean
-    authorizationLevel: 'always' | 'whenInUse' | 'auto'
-  }
+  type SuccessCallback = (position: GeoPosition) => void
 
-  export function setRNConfiguration(config: GeoConfig): void
-  export function requestAuthorization(): void
+  type ErrorCallback = (error: GeoError) => void
+
+  export function requestAuthorization(
+    authorizationLevel: AuthorizationLevel
+  ): Promise<AuthorizationResult>
 
   export function getCurrentPosition(
     successCallback: SuccessCallback,
     errorCallback?: ErrorCallback,
     options?: GeoOptions
-  ): Promise<GeoPosition>
+  ): void
 
   export function watchPosition(
     successCallback: SuccessCallback,
@@ -71,10 +71,8 @@ declare module 'react-native-geolocation-service' {
     options?: GeoWatchOptions
   ): number
 
-  type SuccessCallback = (position: GeoPosition) => void
-  type ErrorCallback = (error: GeoError) => void
-
   export function clearWatch(watchID: number): void
+
   export function stopObserving(): void
 }
 
