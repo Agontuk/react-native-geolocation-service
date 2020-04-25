@@ -19,8 +19,10 @@ class RNFusedLocation: RCTEventEmitter {
   private let locationManager: CLLocationManager = CLLocationManager()
   private var hasListeners: Bool = false
   private var observing: Bool = false
-  private var resolveAuthorizationStatus: RCTPromiseResolveBlock? = nil
   private var useSignificantChanges: Bool = false
+  private var resolveAuthorizationStatus: RCTPromiseResolveBlock? = nil
+  private var successCallback: RCTResponseSenderBlock? = nil
+  private var errorCallback: RCTResponseSenderBlock? = nil
 
   override init() {
     super.init()
@@ -78,10 +80,22 @@ class RNFusedLocation: RCTEventEmitter {
   // MARK: Bridge Method
   @objc func getCurrentPosition(
     _ options: [String: Any],
-    successCallback: RCTResponseSenderBlock,
-    errorCallback: RCTResponseSenderBlock
+    successCallback: @escaping RCTResponseSenderBlock,
+    errorCallback: @escaping RCTResponseSenderBlock
   ) -> Void {
-    NSLog("getCurrentPosition")
+    let distanceFilter = options["distanceFilter"] as? Double ?? kCLDistanceFilterNone
+    let highAccuracy = options["enableHighAccuracy"] as? Bool ?? false
+    // let maximumAge = options["maximumAge"] as? Double ?? Double.infinity
+    // let timeout = options["timeout"] as? Double ?? Double.infinity
+
+    let lm = CLLocationManager()
+    lm.delegate = self
+    lm.desiredAccuracy = highAccuracy ? kCLLocationAccuracyBest : DEFAULT_ACCURACY
+    lm.distanceFilter = distanceFilter
+    lm.requestLocation()
+
+    self.successCallback = successCallback
+    self.errorCallback = errorCallback
   }
 
   // MARK: Bridge Method
@@ -192,8 +206,16 @@ extension RNFusedLocation: CLLocationManagerDelegate {
       "timestamp": location.timestamp.timeIntervalSince1970 * 1000 // ms
     ]
 
-    if hasListeners && observing {
+    if manager.isEqual(locationManager) && hasListeners && observing {
       sendEvent(withName: "geolocationDidChange", body: locationData)
+      return
+    }
+
+    if successCallback != nil {
+      successCallback?([locationData])
+      successCallback = nil
+      errorCallback = nil
+      manager.delegate = nil
     }
   }
 
@@ -232,8 +254,16 @@ extension RNFusedLocation: CLLocationManagerDelegate {
       ]
     }
 
-    if hasListeners && observing {
+    if manager.isEqual(locationManager) && hasListeners && observing {
       sendEvent(withName: "geolocationError", body: errorData)
+      return
+    }
+
+    if errorCallback != nil {
+      errorCallback?([errorData])
+      successCallback = nil
+      errorCallback = nil
+      manager.delegate = nil
     }
   }
 }
