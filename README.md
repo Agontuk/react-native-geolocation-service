@@ -4,7 +4,7 @@ React native geolocation service for iOS and android.
 # Why ?
 This library is created in an attempt to fix the location timeout issue on android with the react-native's current implementation of Geolocation API. This library tries to solve the issue by using Google Play Service's new `FusedLocationProviderClient` API, which Google strongly recommends over android's default framework location API. It automatically decides which provider to use based on your request configuration and also prompts you to change the location mode if it doesn't satisfy your current request configuration.
 
-> NOTE: Location request can still timeout since many android devices have GPS issue in the hardware level or in the system software level. Check the [FAQ](#faq) for more details.
+> NOTE: Location request can still timeout since many android devices have GPS issue in the hardware/system level. Check the [FAQ](#faq) for more details.
 
 # Installation
 yarn
@@ -20,52 +20,54 @@ npm install react-native-geolocation-service
 # Compatibility
 | RN Version | Package Version |
 | ---------- | --------------- |
-| 0.60+      | >=3.0.0         |
-| 0.57+      | 2.0.0           |
+| >=0.60     | >=3.0.0         |
+| <0.60      | 2.0.0           |
 | <0.57      | 1.1.0           |
 
 # Setup
 
 ## iOS
-You need to include the `NSLocationWhenInUseUsageDescription` key in Info.plist to enable geolocation when using the app. In order to enable geolocation in the background, you need to include the `NSLocationAlwaysUsageDescription` key in Info.plist and add location as a background mode in the 'Capabilities' tab in Xcode.
-
-> NOTE: This library uses [@react-native-community/geolocation](https://github.com/react-native-community/react-native-geolocation) under the hood for iOS. It'll be installed along with this library, the following instruction describes how to integrate it in your project.
-
-<details>
-<summary>0.60 or higher</summary>
-
- - Update your `Podfile`
-    ```
-    pod 'react-native-geolocation', path: '../node_modules/@react-native-community/geolocation'
-    ```
- - Then run `pod install` from ios directory
-</details>
+### 1) Linking
+For RN 0.60 or higher, no manual linking is needed. After installing the package, just run `pod install` from inside ios directory. It'll automatically pickup the package and install it.
 
 <details>
 <summary>0.59 or below</summary>
 
-### Manually link the library on iOS
+### Using Cocoapods
+- Update your `Podfile`
+    ```
+    pod 'react-native-geolocation-service', path: '../node_modules/react-native-geolocation-service'
+    ```
+ - Then run `pod install` from ios directory
+
+### Manually linking
 
 #### `Open project.xcodeproj in Xcode`
 
-Drag `RNCGeolocation.xcodeproj` to your project on Xcode (usually under the Libraries group on Xcode):
+Drag `RNFusedLocation.xcodeproj` to your project on Xcode (usually under the Libraries group on Xcode):
 
 ![xcode-add](screenshots/01-ios-add-to-library.png?raw=true)
 
-#### Link `libRNCGeolocation.a` binary with libraries
+#### Link `libRNFusedLocation.a` binary with libraries
 
 Click on your main project file (the one that represents the `.xcodeproj`) select `Build Phases` and drag the static library from the `Products` folder inside the Library you are importing to `Link Binary With Libraries` (or use the `+` sign and choose library from the list):
 
 ![xcode-link](screenshots/02-ios-add-to-build-phases.png?raw=true)
-
-### Using Cocoapods
-- Update your `Podfile`
-    ```
-    pod 'react-native-geolocation', path: '../node_modules/@react-native-community/geolocation'
-    ```
- - Then run `pod install` from ios directory
-
 </details>
+
+### 2) Enable Swift Support
+Since the iOS implementation is written in swift, you need to add swift support in your project. It can be done just by adding an empty swift file and a bridging header in your project folder.
+- Select `File -> New -> File` from xcode
+- Choose Swift file, name it anything
+- Click `Next` and say yes when prompted if you’d like to generate a bridging header (important)
+
+### 3) Update `info.plist`
+There are three info.plist keys for location service
+- NSLocationWhenInUseUsageDescription
+- NSLocationAlwaysUsageDescription
+- NSLocationAlwaysAndWhenInUseUsageDescription
+
+Unless you need background location update, adding only the first key will be enough. To enable background location update, you need to add all the keys in `info.plist` and add location as a background mode in the `Signing & Capabilities -> Capability` tab in Xcode.
 
 ## Android
 __No additional setup is required for 0.60 or above.__
@@ -145,7 +147,7 @@ __No additional setup is required for 0.60 or above.__
 # Usage
 Since this library was meant to be a drop-in replacement for the RN's Geolocation API, the usage is pretty straight forward, with some extra error cases to handle.
 
-> One thing to note, this library assumes that location permission is already granted by the user, so you have to use `PermissionsAndroid` to request for permission before making the location request.
+> One thing to note, for android this library assumes that location permission is already granted by the user, so you have to use `PermissionsAndroid` to request for permission before making the location request.
 
 ```js
 ...
@@ -153,33 +155,30 @@ import Geolocation from 'react-native-geolocation-service';
 ...
 
 componentDidMount() {
-    // Instead of navigator.geolocation, just use Geolocation.
-    if (hasLocationPermission) {
-        Geolocation.getCurrentPosition(
-            (position) => {
-                console.log(position);
-            },
-            (error) => {
-                // See error code charts below.
-                console.log(error.code, error.message);
-            },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-        );
-    }
+  if (hasLocationPermission) {
+    Geolocation.getCurrentPosition(
+        (position) => {
+          console.log(position);
+        },
+        (error) => {
+          // See error code charts below.
+          console.log(error.code, error.message);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+    );
+  }
 }
 ```
 
 # API
-#### `setRNConfiguration(options) (iOS only)`
- - **options**:
+#### `async requestAuthorization(authorizationLevel) (iOS only)`
+Request location permission based on the authorizationLevel parameter. Can be either `"whenInUse"` or `"always"`. You have to configure the plist keys during setup.
 
-    | Name | Type | Default | Description |
-    | -- | -- | -- | -- |
-    | skipPermissionRequests | `bool` | false | If `true`, you must request permissions before using Geolocation APIs. |
-    | authorizationLevel | `string` | -- | Changes whether the user will be asked to give "always" or "when in use" location services permission. Any other value or `auto` will use the default behaviour, where the permission level is based on the contents of your `Info.plist`. Possible values are `whenInUse`, `always` and `auto`. |
-
-#### `requestAuthorization() (iOS only)`
-Request suitable Location permission based on the key configured on pList. If NSLocationAlwaysUsageDescription is set, it will request Always authorization, although if NSLocationWhenInUseUsageDescription is set, it will request InUse authorization.
+When promise resolves, returns the status of the authorization.
+- `disabled` - Location service is disabled
+- `granted` - Permission granted
+- `denied` - Permission denied
+- `restricted` - Permission restricted
 
 #### `getCurrentPosition(successCallback, ?errorCallback, ?options)`
  - **successCallback**: Invoked with latest location info.
@@ -194,7 +193,6 @@ Request suitable Location permission based on the key configured on pList. If NS
     | distanceFilter | `m` | `0` | Minimum displacement in meters
     | showLocationDialog | `bool` | `true` | Whether to ask to enable location in Android (android only)
     | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog (android only)
-    | useSignificantChanges | `bool` | false | Uses the battery-efficient native significant changes APIs to return locations. Locations will only be returned when the device detects a significant distance has been breached (iOS only)
 
 #### `watchPosition(successCallback, ?errorCallback, ?options)`
  - **successCallback**: Invoked with latest location info.
