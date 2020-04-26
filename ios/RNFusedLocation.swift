@@ -155,6 +155,28 @@ class RNFusedLocation: RCTEventEmitter {
       }
     #endif
   }
+
+  private func generateErrorResponse(code: Int, message: String = "") -> [String: Any] {
+    var msg: String = message
+
+    if msg.isEmpty {
+      switch code {
+        case LocationError.PERMISSION_DENIED.rawValue:
+          msg = "Location permission denied"
+        case LocationError.POSITION_UNAVAILABLE.rawValue:
+          msg = "Unable to retrieve location due to a network failure"
+        case LocationError.TIMEOUT.rawValue:
+          msg = "Location request timed out"
+        default:
+          break
+      }
+    }
+
+    return [
+      "code": code,
+      "message": msg
+    ]
+  }
 }
 
 // MARK: RCTBridgeModule, RCTEventEmitter overrides
@@ -222,48 +244,39 @@ extension RNFusedLocation: CLLocationManagerDelegate {
       return
     }
 
-    if successCallback != nil {
-      lastLocation = locationData
-      successCallback?([locationData])
-      successCallback = nil
-      errorCallback = nil
-      manager.delegate = nil
-    }
+    guard successCallback != nil else { return }
+
+    lastLocation = locationData
+    successCallback!([locationData])
+
+    // Cleanup
+    successCallback = nil
+    errorCallback = nil
+    manager.delegate = nil
   }
 
   func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-    let errorData: [String: Any]
+    var errorData: [String: Any] = generateErrorResponse(
+      code: LocationError.POSITION_UNAVAILABLE.rawValue,
+      message: "Unable to retrieve location"
+    )
 
     if let clErr = error as? CLError {
       switch clErr.code {
         case CLError.denied:
           if !CLLocationManager.locationServicesEnabled() {
-            errorData = [
-              "code": LocationError.POSITION_UNAVAILABLE.rawValue,
-              "message": "Location service is turned off"
-            ]
+            errorData = generateErrorResponse(
+              code: LocationError.POSITION_UNAVAILABLE.rawValue,
+              message: "Location service is turned off"
+            )
           } else {
-            errorData = [
-              "code": LocationError.PERMISSION_DENIED.rawValue,
-              "message": "Location permission denied"
-            ]
+            errorData = generateErrorResponse(code: LocationError.PERMISSION_DENIED.rawValue)
           }
         case CLError.network:
-          errorData = [
-            "code": LocationError.POSITION_UNAVAILABLE.rawValue,
-            "message": "Unable to retrieve location due to a network failure"
-          ]
+          errorData = generateErrorResponse(code: LocationError.POSITION_UNAVAILABLE.rawValue)
         default:
-          errorData = [
-            "code": LocationError.POSITION_UNAVAILABLE.rawValue,
-            "message": "Unable to retrieve location"
-          ]
+          break
       }
-    } else {
-      errorData = [
-        "code": LocationError.POSITION_UNAVAILABLE.rawValue,
-        "message": "Unable to retrieve location"
-      ]
     }
 
     if manager.isEqual(locationManager) && hasListeners && observing {
@@ -271,11 +284,13 @@ extension RNFusedLocation: CLLocationManagerDelegate {
       return
     }
 
-    if errorCallback != nil {
-      errorCallback?([errorData])
-      successCallback = nil
-      errorCallback = nil
-      manager.delegate = nil
-    }
+    guard errorCallback != nil else { return }
+
+    errorCallback!([errorData])
+
+    // Cleanup
+    successCallback = nil
+    errorCallback = nil
+    manager.delegate = nil
   }
 }
