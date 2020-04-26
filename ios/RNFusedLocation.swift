@@ -18,6 +18,7 @@ enum AuthorizationStatus: String {
 class RNFusedLocation: RCTEventEmitter {
   private let locationManager: CLLocationManager = CLLocationManager()
   private var hasListeners: Bool = false
+  private var lastLocation: [String: Any] = [:]
   private var observing: Bool = false
   private var useSignificantChanges: Bool = false
   private var resolveAuthorizationStatus: RCTPromiseResolveBlock? = nil
@@ -85,8 +86,18 @@ class RNFusedLocation: RCTEventEmitter {
   ) -> Void {
     let distanceFilter = options["distanceFilter"] as? Double ?? kCLDistanceFilterNone
     let highAccuracy = options["enableHighAccuracy"] as? Bool ?? false
-    // let maximumAge = options["maximumAge"] as? Double ?? Double.infinity
+    let maximumAge = options["maximumAge"] as? Double ?? Double.infinity
     // let timeout = options["timeout"] as? Double ?? Double.infinity
+
+    if !lastLocation.isEmpty {
+      let elapsedTime = (Date().timeIntervalSince1970 * 1000) - (lastLocation["timestamp"] as! Double)
+
+      if elapsedTime < maximumAge {
+        // Return cached location
+        successCallback([lastLocation])
+        return
+      }
+    }
 
     let lm = CLLocationManager()
     lm.delegate = self
@@ -212,6 +223,7 @@ extension RNFusedLocation: CLLocationManagerDelegate {
     }
 
     if successCallback != nil {
+      lastLocation = locationData
       successCallback?([locationData])
       successCallback = nil
       errorCallback = nil
