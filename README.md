@@ -56,7 +56,7 @@ Click on your main project file (the one that represents the `.xcodeproj`) selec
 </details>
 
 ### 2) Enable Swift Support
-Since the iOS implementation is written in swift, you need to add swift support in your project. It can be done just by adding an empty swift file and a bridging header in your project folder.
+Since the iOS implementation is written in swift, you need to add swift support in your project. It can be done just by adding an empty swift file and a bridging header in your project folder. You have to do it from xcode, otherwise swift compiler flag won't be updated.
 - Select `File -> New -> File` from xcode
 - Choose Swift file, name it anything
 - Click `Next` and say yes when prompted if you’d like to generate a bridging header (important)
