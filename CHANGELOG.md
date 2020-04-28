@@ -1,5 +1,8 @@
 # Changelog
 
+### 4.0.1 (April 29, 2020)
+ - Removed premature check of isLocationEnabled in startObserving
+
 ### 4.0.0 (February 3, 2020)
  - Android: update android support library to androidx
  - Android: fix ApiException handling in getLastLocation method
