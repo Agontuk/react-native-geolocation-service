@@ -1,9 +1,11 @@
 package com.agontuk.RNFusedLocation;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.location.Location;
+import android.os.Build;
 import android.util.Log;
 
 import com.facebook.react.bridge.ActivityEventListener;
@@ -404,6 +406,12 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         }
     }
 
+    protected class RNFusedLocationModuleBridge {
+        public void onLocationUpdate(Location location) {
+            invokeSuccess(LocationUtils.locationToMap(location), false);
+        }
+    }
+
     /**
      * Get periodic location updates based on the current location request.
      */
@@ -417,7 +425,19 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                 }
             };
 
-            mFusedProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallback, null);
+            new RNFusedBackgroundLocationService(new RNFusedLocationModuleBridge());
+            Intent intent = new Intent(getReactApplicationContext(), RNFusedBackgroundLocationService.class);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                getReactApplicationContext().startForegroundService(intent);
+            } else {
+                getReactApplicationContext().startService(intent);
+            }
+
+            PendingIntent pendingIntent = PendingIntent.getService(getReactApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            mFusedProviderClient.requestLocationUpdates(mLocationRequest, pendingIntent);
+
+//            mFusedProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallback, null);
         }
     }
 
@@ -439,7 +459,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     /**
      * Helper method to invoke success callback
      */
-    private void invokeSuccess(WritableMap data, boolean isSingleUpdate) {
+    protected void invokeSuccess(WritableMap data, boolean isSingleUpdate) {
         if (!isSingleUpdate) {
             getContext().getJSModule(RCTDeviceEventEmitter.class)
                 .emit("geolocationDidChange", data);
