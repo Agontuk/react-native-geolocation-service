@@ -117,6 +117,7 @@ class RNFusedLocation: RCTEventEmitter {
 
     locationManager.desiredAccuracy = highAccuracy ? kCLLocationAccuracyBest : DEFAULT_ACCURACY
     locationManager.distanceFilter = distanceFilter
+    locationManager.allowsBackgroundLocationUpdates = shouldAllowBackgroundUpdate()
 
     significantChanges
       ? locationManager.startMonitoringSignificantLocationChanges()
@@ -154,6 +155,16 @@ class RNFusedLocation: RCTEventEmitter {
           NSLog("Invalid authorization level provided")
       }
     #endif
+  }
+
+  private func shouldAllowBackgroundUpdate() -> Bool {
+    let info = Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String] ?? []
+
+    if info.contains("location") {
+      return true
+    }
+
+    return false
   }
 
   private func generateErrorResponse(code: Int, message: String = "") -> [String: Any] {
