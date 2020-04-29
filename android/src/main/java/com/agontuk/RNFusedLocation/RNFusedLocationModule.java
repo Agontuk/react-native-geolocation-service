@@ -459,7 +459,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     /**
      * Helper method to invoke success callback
      */
-    protected void invokeSuccess(WritableMap data, boolean isSingleUpdate) {
+    private void invokeSuccess(WritableMap data, boolean isSingleUpdate) {
         if (!isSingleUpdate) {
             getContext().getJSModule(RCTDeviceEventEmitter.class)
                 .emit("geolocationDidChange", data);
