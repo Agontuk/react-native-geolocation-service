@@ -11,13 +11,13 @@ import com.google.android.gms.location.LocationResult;
 
 public class RNFusedBackgroundLocationService extends Service {
 
-    static RNFusedLocationModule.RNFusedLocationModuleBridge rNFusedLocationModuleBridge = null;
+    static RNFusedLocationModule rNFusedLocationModuleInstance = null;
 
     public RNFusedBackgroundLocationService() {
     }
 
-    public RNFusedBackgroundLocationService(RNFusedLocationModule.RNFusedLocationModuleBridge parent) {
-        rNFusedLocationModuleBridge = parent;
+    public RNFusedBackgroundLocationService(RNFusedLocationModule instance) {
+        rNFusedLocationModuleInstance = instance;
     }
 
     @Nullable
@@ -51,8 +51,8 @@ public class RNFusedBackgroundLocationService extends Service {
             return;
         }
 
-        if (null != location && rNFusedLocationModuleBridge != null) {
-            rNFusedLocationModuleBridge.onLocationUpdate(location);
+        if (null != location && rNFusedLocationModuleInstance != null) {
+            rNFusedLocationModuleInstance.invokeSuccess(LocationUtils.locationToMap(location), false);
         }
     }
 

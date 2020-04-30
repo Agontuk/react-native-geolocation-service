@@ -406,12 +406,6 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         }
     }
 
-    protected class RNFusedLocationModuleBridge {
-        public void onLocationUpdate(Location location) {
-            invokeSuccess(LocationUtils.locationToMap(location), false);
-        }
-    }
-
     /**
      * Get periodic location updates based on the current location request.
      */
@@ -425,7 +419,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                 }
             };
 
-            new RNFusedBackgroundLocationService(new RNFusedLocationModuleBridge());
+            new RNFusedBackgroundLocationService(this);
             Intent intent = new Intent(getReactApplicationContext(), RNFusedBackgroundLocationService.class);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -459,7 +453,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     /**
      * Helper method to invoke success callback
      */
-    private void invokeSuccess(WritableMap data, boolean isSingleUpdate) {
+    protected void invokeSuccess(WritableMap data, boolean isSingleUpdate) {
         if (!isSingleUpdate) {
             getContext().getJSModule(RCTDeviceEventEmitter.class)
                 .emit("geolocationDidChange", data);
