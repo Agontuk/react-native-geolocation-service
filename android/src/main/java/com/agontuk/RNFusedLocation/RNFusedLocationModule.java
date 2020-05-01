@@ -52,6 +52,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     private double mMaximumAge = Double.POSITIVE_INFINITY;
     private long mTimeout = Long.MAX_VALUE;
     private float mDistanceFilter = DEFAULT_DISTANCE_FILTER;
+    private boolean mEnableBackgroundUpdate = false;
 
     private Callback mSuccessCallback;
     private Callback mErrorCallback;
@@ -250,6 +251,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         mForceRequestLocation = options.hasKey("forceRequestLocation")
             ? options.getBoolean("forceRequestLocation")
             : false;
+        mEnableBackgroundUpdate = options.hasKey("enableBackgroundUpdate")
+            ? options.getBoolean("enableBackgroundUpdate")
+            : false;
 
         LocationSettingsRequest locationSettingsRequest = buildLocationSettingsRequest();
 
@@ -272,6 +276,10 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         if (mFusedProviderClient != null && mLocationCallback != null) {
             mFusedProviderClient.removeLocationUpdates(mLocationCallback);
             mLocationCallback = null;
+        }
+        if (mEnableBackgroundUpdate) {
+            Intent intent = new Intent(getContext(), RNFusedBackgroundLocationService.class);
+            getContext().stopService(intent);
         }
     }
 
@@ -411,27 +419,30 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
      */
     private void getLocationUpdates() {
         if (mFusedProviderClient != null && mLocationRequest != null) {
-            mLocationCallback = new LocationCallback() {
-                @Override
-                public void onLocationResult(LocationResult locationResult) {
-                    Location location = locationResult.getLastLocation();
-                    invokeSuccess(LocationUtils.locationToMap(location), false);
+
+            if (mEnableBackgroundUpdate) {
+                new RNFusedBackgroundLocationService(this);
+                Intent intent = new Intent(getContext(), RNFusedBackgroundLocationService.class);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    getContext().startForegroundService(intent);
+                } else {
+                    getContext().startService(intent);
                 }
-            };
 
-            new RNFusedBackgroundLocationService(this);
-            Intent intent = new Intent(getReactApplicationContext(), RNFusedBackgroundLocationService.class);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                getReactApplicationContext().startForegroundService(intent);
+                PendingIntent pendingIntent = PendingIntent.getService(getContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                mFusedProviderClient.requestLocationUpdates(mLocationRequest, pendingIntent);
             } else {
-                getReactApplicationContext().startService(intent);
+                mLocationCallback = new LocationCallback() {
+                    @Override
+                    public void onLocationResult(LocationResult locationResult) {
+                        Location location = locationResult.getLastLocation();
+                        invokeSuccess(LocationUtils.locationToMap(location), false);
+                    }
+                };
+
+                mFusedProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallback, null);
             }
-
-            PendingIntent pendingIntent = PendingIntent.getService(getReactApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-            mFusedProviderClient.requestLocationUpdates(mLocationRequest, pendingIntent);
-
-//            mFusedProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallback, null);
         }
     }
 
