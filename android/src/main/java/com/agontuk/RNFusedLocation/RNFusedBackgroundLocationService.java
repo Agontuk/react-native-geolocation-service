@@ -16,7 +16,7 @@ public class RNFusedBackgroundLocationService extends Service {
     public RNFusedBackgroundLocationService() {
     }
 
-    public RNFusedBackgroundLocationService(RNFusedLocationModule instance) {
+    public static void setRNFusedLocationModuleInstance(RNFusedLocationModule instance) {
         rNFusedLocationModuleInstance = instance;
     }
 

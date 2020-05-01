@@ -421,7 +421,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
         if (mFusedProviderClient != null && mLocationRequest != null) {
 
             if (mEnableBackgroundUpdate) {
-                new RNFusedBackgroundLocationService(this);
+                RNFusedBackgroundLocationService.setRNFusedLocationModuleInstance(this);
                 Intent intent = new Intent(getContext(), RNFusedBackgroundLocationService.class);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
