@@ -24,6 +24,9 @@ npm install react-native-geolocation-service
 | 0.57+      | 2.0.0           |
 | <0.57      | 1.1.0           |
 
+## Android
+Require SDK and Build tools version >= 29
+
 # Setup
 
 ## iOS
@@ -91,10 +94,10 @@ __No additional setup is required for 0.60 or above.__
          + Project-wide Gradle configuration properties
          */
         ext {
-            compileSdkVersion   = 28
-            targetSdkVersion    = 28
-            buildToolsVersion   = "28.0.3"
-            supportLibVersion   = "28.0.0"
+            compileSdkVersion   = 29
+            targetSdkVersion    = 29
+            buildToolsVersion   = "29.0.3"
+            supportLibVersion   = "29.0.0"
             googlePlayServicesVersion = "16.0.0"
         }
         repositories { ... }
@@ -210,6 +213,7 @@ Request suitable Location permission based on the key configured on pList. If NS
     | showLocationDialog | `bool` | `true` | whether to ask to enable location in Android (android only)
     | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog (android only)
     | useSignificantChanges | `bool` | false | Uses the battery-efficient native significant changes APIs to return locations. Locations will only be returned when the device detects a significant distance has been breached (iOS only)
+    | enableBackgroundUpdate | `bool` | false | Enable/Disable location updates when app is running in background or killed.(Android only)
 
 #### `clearWatch(watchId)`
  - watchId (id returned by `watchPosition`)
