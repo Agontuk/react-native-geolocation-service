@@ -118,7 +118,7 @@ export default class App extends Component<{}> {
         },
         {
           enableHighAccuracy: true,
-          timeout: 2000,
+          timeout: 15000,
           maximumAge: 10000,
           distanceFilter: 0,
           forceRequestLocation: true,
