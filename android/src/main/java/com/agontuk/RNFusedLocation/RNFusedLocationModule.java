@@ -22,6 +22,7 @@ import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEm
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationAvailability;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -412,6 +413,17 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
   private void getLocationUpdates() {
     if (mFusedProviderClient != null && mLocationRequest != null) {
       mLocationCallback = new LocationCallback() {
+        @Override
+        public void onLocationAvailability(LocationAvailability locationAvailability) {
+          if (!locationAvailability.isLocationAvailable()) {
+            invokeError(
+              LocationError.POSITION_UNAVAILABLE.getValue(),
+              "Unable to retrieve location",
+              false
+            );
+          }
+        }
+
         @Override
         public void onLocationResult(LocationResult locationResult) {
           Location location = locationResult.getLastLocation();
