@@ -70,7 +70,23 @@ There are three info.plist keys for location service
 Unless you need background location update, adding only the first key will be enough. To enable background location update, you need to add all the keys in `info.plist` and add location as a background mode in the `Signing & Capabilities -> Capability` tab in Xcode.
 
 ## Android
-__No additional setup is required for 0.60 or above.__
+
+### 1) Linking
+For RN 0.60 or higher, no manual linking is needed. You can override following gradle properties from your root build.gradle file.
+
+```gradle
+ext {
+  compileSdkVersion   = 28
+  buildToolsVersion   = "28.0.3"
+  minSdkVersion       = 16
+  targetSdkVersion    = 28
+
+  // Any of the following will work
+  googlePlayServicesVersion      = "17.0.0"
+  // playServicesVersion         = "17.0.0"
+  // playServicesLocationVersion = "17.0.0"
+}
+```
 
 <details>
 <summary>0.59 or below</summary>
@@ -94,10 +110,10 @@ __No additional setup is required for 0.60 or above.__
          */
         ext {
             compileSdkVersion   = 28
+            minSdkVersion       = 16
             targetSdkVersion    = 28
             buildToolsVersion   = "28.0.3"
-            supportLibVersion   = "28.0.0"
-            googlePlayServicesVersion = "16.0.0"
+            googlePlayServicesVersion = "17.0.0"
         }
         repositories { ... }
         dependencies { ... }
@@ -143,6 +159,13 @@ __No additional setup is required for 0.60 or above.__
     }
     ```
 </details>
+
+### 2) Permissions
+Add permission in your `AndroidManifest.xml` file based on your project requirement.
+```xml
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+```
 
 # Usage
 Since this library was meant to be a drop-in replacement for the RN's Geolocation API, the usage is pretty straight forward, with some extra error cases to handle.
