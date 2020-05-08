@@ -20,6 +20,7 @@ class RNFusedLocation: RCTEventEmitter {
   private var hasListeners: Bool = false
   private var lastLocation: [String: Any] = [:]
   private var observing: Bool = false
+  private var timeoutTimer: Timer? = nil
   private var useSignificantChanges: Bool = false
   private var resolveAuthorizationStatus: RCTPromiseResolveBlock? = nil
   private var successCallback: RCTResponseSenderBlock? = nil
@@ -38,6 +39,8 @@ class RNFusedLocation: RCTEventEmitter {
 
       observing = false
     }
+
+    timeoutTimer?.invalidate()
 
     locationManager.delegate = nil;
   }
@@ -87,7 +90,7 @@ class RNFusedLocation: RCTEventEmitter {
     let distanceFilter = options["distanceFilter"] as? Double ?? kCLDistanceFilterNone
     let highAccuracy = options["enableHighAccuracy"] as? Bool ?? false
     let maximumAge = options["maximumAge"] as? Double ?? Double.infinity
-    // let timeout = options["timeout"] as? Double ?? Double.infinity
+    let timeout = options["timeout"] as? Double ?? Double.infinity
 
     if !lastLocation.isEmpty {
       let elapsedTime = (Date().timeIntervalSince1970 * 1000) - (lastLocation["timestamp"] as! Double)
@@ -99,14 +102,27 @@ class RNFusedLocation: RCTEventEmitter {
       }
     }
 
-    let lm = CLLocationManager()
-    lm.delegate = self
-    lm.desiredAccuracy = highAccuracy ? kCLLocationAccuracyBest : DEFAULT_ACCURACY
-    lm.distanceFilter = distanceFilter
-    lm.requestLocation()
+    let locManager = CLLocationManager()
+    locManager.delegate = self
+    locManager.desiredAccuracy = highAccuracy ? kCLLocationAccuracyBest : DEFAULT_ACCURACY
+    locManager.distanceFilter = distanceFilter
+    locManager.requestLocation()
 
     self.successCallback = successCallback
     self.errorCallback = errorCallback
+
+    if timeout > 0 && timeout != Double.infinity {
+      timeoutTimer = Timer.scheduledTimer(
+        timeInterval: timeout / 1000.0, // timeInterval is in seconds
+        target: self,
+        selector: #selector(timerFired),
+        userInfo: [
+          "errorCallback": errorCallback,
+          "manager": locManager
+        ],
+        repeats: false
+      )
+    }
   }
 
   // MARK: Bridge Method
@@ -134,6 +150,16 @@ class RNFusedLocation: RCTEventEmitter {
       : locationManager.stopUpdatingLocation()
 
     observing = false
+  }
+
+  @objc func timerFired(timer: Timer) -> Void {
+    let data = timer.userInfo as! [String: Any]
+    let errorCallback = data["errorCallback"] as! RCTResponseSenderBlock
+    let manager = data["manager"] as! CLLocationManager
+
+    manager.stopUpdatingLocation()
+    manager.delegate = nil
+    errorCallback([generateErrorResponse(code: LocationError.TIMEOUT.rawValue)])
   }
 
   private func checkPlistKeys(authorizationLevel: String) -> Void {
@@ -261,6 +287,7 @@ extension RNFusedLocation: CLLocationManagerDelegate {
     successCallback!([locationData])
 
     // Cleanup
+    timeoutTimer?.invalidate()
     successCallback = nil
     errorCallback = nil
     manager.delegate = nil
@@ -300,6 +327,7 @@ extension RNFusedLocation: CLLocationManagerDelegate {
     errorCallback!([errorData])
 
     // Cleanup
+    timeoutTimer?.invalidate()
     successCallback = nil
     errorCallback = nil
     manager.delegate = nil
