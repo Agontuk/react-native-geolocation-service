@@ -76,7 +76,10 @@ public class SingleLocationUpdate {
   public void getLocation() {
     if (mFusedProviderClient != null) {
       mFusedProviderClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.getMainLooper());
-      mHandler.postDelayed(mTimeoutRunnable, mTimeout);
+
+      if (mTimeout > 0 && mTimeout != Long.MAX_VALUE) {
+        mHandler.postDelayed(mTimeoutRunnable, mTimeout);
+      }
     }
   }
 
