@@ -171,14 +171,22 @@ class RNFusedLocation: RCTEventEmitter {
       switch authorizationLevel {
         case "whenInUse":
           if key1 == nil {
-            NSLog("NSLocationWhenInUseUsageDescription key must be present in Info.plist")
+            RCTMakeAndLogError(
+              "NSLocationWhenInUseUsageDescription key must be present in Info.plist",
+              nil,
+              nil
+            )
           }
         case "always":
           if key1 == nil || key2 == nil || key3 == nil {
-            NSLog("NSLocationWhenInUseUsageDescription, NSLocationAlwaysUsageDescription & NSLocationAlwaysAndWhenInUseUsageDescription key must be present in Info.plist")
+            RCTMakeAndLogError(
+              "NSLocationWhenInUseUsageDescription, NSLocationAlwaysUsageDescription & NSLocationAlwaysAndWhenInUseUsageDescription key must be present in Info.plist",
+              nil,
+              nil
+            )
           }
         default:
-          NSLog("Invalid authorization level provided")
+          RCTMakeAndLogError("Invalid authorization level provided", nil, nil)
       }
     #endif
   }
