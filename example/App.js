@@ -12,6 +12,7 @@ import {
   PermissionsAndroid,
   Platform,
   StyleSheet,
+  Switch,
   Text,
   ToastAndroid,
   View,
@@ -23,7 +24,11 @@ export default class App extends Component<{}> {
   watchId = null;
 
   state = {
+    forceLocation: true,
+    highAccuracy: true,
     loading: false,
+    showLocationDialog: true,
+    significantChanges: false,
     updatesEnabled: false,
     location: {},
   };
@@ -117,11 +122,12 @@ export default class App extends Component<{}> {
           console.log(error);
         },
         {
-          enableHighAccuracy: true,
+          enableHighAccuracy: this.state.highAccuracy,
           timeout: 15000,
           maximumAge: 10000,
           distanceFilter: 0,
-          forceRequestLocation: true,
+          forceRequestLocation: this.state.forceLocation,
+          showLocationDialog: this.state.showLocationDialog,
         },
       );
     });
@@ -145,11 +151,13 @@ export default class App extends Component<{}> {
           console.log(error);
         },
         {
-          enableHighAccuracy: true,
+          enableHighAccuracy: this.state.highAccuracy,
           distanceFilter: 50,
           interval: 5000,
           fastestInterval: 2000,
-          forceRequestLocation: true,
+          forceRequestLocation: this.state.forceLocation,
+          showLocationDialog: this.state.showLocationDialog,
+          useSignificantChanges: this.state.significantChanges,
         },
       );
     });
@@ -162,30 +170,82 @@ export default class App extends Component<{}> {
     }
   };
 
+  setAccuracy = (value) => this.setState({ highAccuracy: value });
+  setSignificantChange = (value) =>
+    this.setState({ significantChanges: value });
+  setLocationDialog = (value) => this.setState({ showLocationDialog: value });
+  setForceLocation = (value) => this.setState({ forceLocation: value });
+
   render() {
-    const { loading, location, updatesEnabled } = this.state;
+    const {
+      forceLocation,
+      highAccuracy,
+      loading,
+      location,
+      showLocationDialog,
+      significantChanges,
+      updatesEnabled,
+    } = this.state;
+
     return (
       <View style={styles.container}>
-        <Button
-          title="Get Location"
-          onPress={this.getLocation}
-          disabled={loading || updatesEnabled}
-        />
-        <View style={styles.buttons}>
-          <Button
-            title="Start Observing"
-            onPress={this.getLocationUpdates}
-            disabled={updatesEnabled}
-          />
-          <Button
-            title="Stop Observing"
-            onPress={this.removeLocationUpdates}
-            disabled={!updatesEnabled}
-          />
-        </View>
+        <View style={styles.optionContainer}>
+          <View style={styles.option}>
+            <Text>Enable High Accuracy</Text>
+            <Switch onValueChange={this.setAccuracy} value={highAccuracy} />
+          </View>
 
-        <View style={styles.result}>
-          <Text>{JSON.stringify(location, null, 4)}</Text>
+          {Platform.OS === 'ios' && (
+            <View style={styles.option}>
+              <Text>Use Significant Changes</Text>
+              <Switch
+                onValueChange={this.setSignificantChange}
+                value={significantChanges}
+              />
+            </View>
+          )}
+
+          {Platform.OS === 'android' && (
+            <>
+              <View style={styles.option}>
+                <Text>Show Location Dialog</Text>
+                <Switch
+                  onValueChange={this.setLocationDialog}
+                  value={showLocationDialog}
+                />
+              </View>
+              <View style={styles.option}>
+                <Text>Force Location Request</Text>
+                <Switch
+                  onValueChange={this.setForceLocation}
+                  value={forceLocation}
+                />
+              </View>
+            </>
+          )}
+        </View>
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Get Location"
+            onPress={this.getLocation}
+            disabled={loading || updatesEnabled}
+          />
+          <View style={styles.buttons}>
+            <Button
+              title="Start Observing"
+              onPress={this.getLocationUpdates}
+              disabled={updatesEnabled}
+            />
+            <Button
+              title="Stop Observing"
+              onPress={this.removeLocationUpdates}
+              disabled={!updatesEnabled}
+            />
+          </View>
+
+          <View style={styles.result}>
+            <Text>{JSON.stringify(location, null, 4)}</Text>
+          </View>
         </View>
       </View>
     );
@@ -196,15 +256,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#F5FCFF',
     paddingHorizontal: 12,
+  },
+  optionContainer: {
+    paddingBottom: 24,
+  },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 12,
   },
   result: {
     borderWidth: 1,
     borderColor: '#666',
     width: '100%',
     paddingHorizontal: 16,
+  },
+  buttonContainer: {
+    alignItems: 'center',
   },
   buttons: {
     flexDirection: 'row',
