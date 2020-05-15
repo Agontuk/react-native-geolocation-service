@@ -1,5 +1,8 @@
 # Changelog
 
+### 4.0.2 (May 15, 2020)
+ - Fix ios module warning
+
 ### 4.0.1 (April 29, 2020)
  - Removed premature check of isLocationEnabled in startObserving
 
