@@ -1,5 +1,16 @@
 # Changelog
 
+### 5.0.0 (May 30, 2020)
+#### Breaking
+ - iOS: new iOS module implementation. Follow this [issue](https://github.com/Agontuk/react-native-geolocation-service/issues/173) for details.
+ - iOS: Removed `setRNConfiguration` usage & updated `requestAuthorization` to return promise.
+ - Android: removed permissions from manifest. You have to declare location permission in your main `AndroidManifest.xml`.
+ - Android: update play-services-location version to `17.0.0`.
+
+#### Fixes
+ - Android: emit error if location is unavailable during `watchPosition` call.
+ - Only start timer if timeout is valid.
+
 ### 4.0.2 (May 15, 2020)
  - Fix ios module warning
 
