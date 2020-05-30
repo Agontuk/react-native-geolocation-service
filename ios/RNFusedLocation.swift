@@ -134,6 +134,7 @@ class RNFusedLocation: RCTEventEmitter {
     locationManager.desiredAccuracy = highAccuracy ? kCLLocationAccuracyBest : DEFAULT_ACCURACY
     locationManager.distanceFilter = distanceFilter
     locationManager.allowsBackgroundLocationUpdates = shouldAllowBackgroundUpdate()
+    locationManager.pausesLocationUpdatesAutomatically = false
 
     significantChanges
       ? locationManager.startMonitoringSignificantLocationChanges()
