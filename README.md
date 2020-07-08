@@ -194,6 +194,9 @@ componentDidMount() {
 ```
 
 # API
+
+> Note that `enableHighAccuracy` may not be necessary for all use cases. The default accuracy is to within 100m, whereas `enableHighAccuracy` will give you the best location available, which may consume more power and take longer for the initial location to be returned.
+
 #### `async requestAuthorization(authorizationLevel) (iOS only)`
 Request location permission based on the authorizationLevel parameter. Can be either `"whenInUse"` or `"always"`. You have to configure the plist keys during setup.
 
