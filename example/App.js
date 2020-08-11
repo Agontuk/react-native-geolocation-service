@@ -18,6 +18,7 @@ import {
   View,
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
+import VIForegroundService from '@voximplant/react-native-foreground-service';
 import appConfig from './app.json';
 
 export default class App extends Component<{}> {
@@ -30,8 +31,13 @@ export default class App extends Component<{}> {
     showLocationDialog: true,
     significantChanges: false,
     updatesEnabled: false,
+    foregroundService: false,
     location: {},
   };
+
+  componentWillUnmount() {
+    this.removeLocationUpdates();
+  }
 
   hasLocationPermissionIOS = async () => {
     const openSetting = () => {
@@ -140,6 +146,10 @@ export default class App extends Component<{}> {
       return;
     }
 
+    if (Platform.OS === 'android' && this.state.foregroundService) {
+      await this.startForegroundService();
+    }
+
     this.setState({ updatesEnabled: true }, () => {
       this.watchId = Geolocation.watchPosition(
         (position) => {
@@ -152,7 +162,7 @@ export default class App extends Component<{}> {
         },
         {
           enableHighAccuracy: this.state.highAccuracy,
-          distanceFilter: 50,
+          distanceFilter: 0,
           interval: 5000,
           fastestInterval: 2000,
           forceRequestLocation: this.state.forceLocation,
@@ -165,8 +175,35 @@ export default class App extends Component<{}> {
 
   removeLocationUpdates = () => {
     if (this.watchId !== null) {
+      this.stopForegroundService();
       Geolocation.clearWatch(this.watchId);
+      this.watchId = null;
       this.setState({ updatesEnabled: false });
+    }
+  };
+
+  startForegroundService = async () => {
+    if (Platform.Version >= 26) {
+      await VIForegroundService.createNotificationChannel({
+        id: 'locationChannel',
+        name: 'Location Tracking Channel',
+        description: 'Tracks location of user',
+        enableVibration: false,
+      });
+    }
+
+    return VIForegroundService.startService({
+      channelId: 'locationChannel',
+      id: 420,
+      title: appConfig.displayName,
+      text: 'Tracking location updates',
+      icon: 'ic_launcher',
+    });
+  };
+
+  stopForegroundService = () => {
+    if (this.state.foregroundService) {
+      VIForegroundService.stopService().catch((err) => err);
     }
   };
 
@@ -175,6 +212,7 @@ export default class App extends Component<{}> {
     this.setState({ significantChanges: value });
   setLocationDialog = (value) => this.setState({ showLocationDialog: value });
   setForceLocation = (value) => this.setState({ forceLocation: value });
+  setForegroundService = (value) => this.setState({ foregroundService: value });
 
   render() {
     const {
@@ -185,6 +223,7 @@ export default class App extends Component<{}> {
       showLocationDialog,
       significantChanges,
       updatesEnabled,
+      foregroundService,
     } = this.state;
 
     return (
@@ -219,6 +258,13 @@ export default class App extends Component<{}> {
                 <Switch
                   onValueChange={this.setForceLocation}
                   value={forceLocation}
+                />
+              </View>
+              <View style={styles.option}>
+                <Text>Enable Foreground Service</Text>
+                <Switch
+                  onValueChange={this.setForegroundService}
+                  value={foregroundService}
                 />
               </View>
             </>
