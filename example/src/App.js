@@ -1,9 +1,3 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
-
 import React, { Component } from 'react';
 import {
   Alert,
@@ -11,6 +5,7 @@ import {
   Linking,
   PermissionsAndroid,
   Platform,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -19,7 +14,9 @@ import {
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import VIForegroundService from '@voximplant/react-native-foreground-service';
-import appConfig from './app.json';
+
+import MapView from './MapView';
+import appConfig from '../app.json';
 
 export default class App extends Component<{}> {
   watchId = null;
@@ -124,7 +121,7 @@ export default class App extends Component<{}> {
           console.log(position);
         },
         (error) => {
-          this.setState({ location: error, loading: false });
+          this.setState({ loading: false });
           console.log(error);
         },
         {
@@ -157,7 +154,6 @@ export default class App extends Component<{}> {
           console.log(position);
         },
         (error) => {
-          this.setState({ location: error });
           console.log(error);
         },
         {
@@ -227,86 +223,104 @@ export default class App extends Component<{}> {
     } = this.state;
 
     return (
-      <View style={styles.container}>
-        <View style={styles.optionContainer}>
-          <View style={styles.option}>
-            <Text>Enable High Accuracy</Text>
-            <Switch onValueChange={this.setAccuracy} value={highAccuracy} />
-          </View>
+      <View style={styles.mainContainer}>
+        <MapView coords={location.coords || null} />
 
-          {Platform.OS === 'ios' && (
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.contentContainer}
+        >
+          <View>
             <View style={styles.option}>
-              <Text>Use Significant Changes</Text>
-              <Switch
-                onValueChange={this.setSignificantChange}
-                value={significantChanges}
+              <Text>Enable High Accuracy</Text>
+              <Switch onValueChange={this.setAccuracy} value={highAccuracy} />
+            </View>
+
+            {Platform.OS === 'ios' && (
+              <View style={styles.option}>
+                <Text>Use Significant Changes</Text>
+                <Switch
+                  onValueChange={this.setSignificantChange}
+                  value={significantChanges}
+                />
+              </View>
+            )}
+
+            {Platform.OS === 'android' && (
+              <>
+                <View style={styles.option}>
+                  <Text>Show Location Dialog</Text>
+                  <Switch
+                    onValueChange={this.setLocationDialog}
+                    value={showLocationDialog}
+                  />
+                </View>
+                <View style={styles.option}>
+                  <Text>Force Location Request</Text>
+                  <Switch
+                    onValueChange={this.setForceLocation}
+                    value={forceLocation}
+                  />
+                </View>
+                <View style={styles.option}>
+                  <Text>Enable Foreground Service</Text>
+                  <Switch
+                    onValueChange={this.setForegroundService}
+                    value={foregroundService}
+                  />
+                </View>
+              </>
+            )}
+          </View>
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Get Location"
+              onPress={this.getLocation}
+              disabled={loading || updatesEnabled}
+            />
+            <View style={styles.buttons}>
+              <Button
+                title="Start Observing"
+                onPress={this.getLocationUpdates}
+                disabled={updatesEnabled}
+              />
+              <Button
+                title="Stop Observing"
+                onPress={this.removeLocationUpdates}
+                disabled={!updatesEnabled}
               />
             </View>
-          )}
-
-          {Platform.OS === 'android' && (
-            <>
-              <View style={styles.option}>
-                <Text>Show Location Dialog</Text>
-                <Switch
-                  onValueChange={this.setLocationDialog}
-                  value={showLocationDialog}
-                />
-              </View>
-              <View style={styles.option}>
-                <Text>Force Location Request</Text>
-                <Switch
-                  onValueChange={this.setForceLocation}
-                  value={forceLocation}
-                />
-              </View>
-              <View style={styles.option}>
-                <Text>Enable Foreground Service</Text>
-                <Switch
-                  onValueChange={this.setForegroundService}
-                  value={foregroundService}
-                />
-              </View>
-            </>
-          )}
-        </View>
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Get Location"
-            onPress={this.getLocation}
-            disabled={loading || updatesEnabled}
-          />
-          <View style={styles.buttons}>
-            <Button
-              title="Start Observing"
-              onPress={this.getLocationUpdates}
-              disabled={updatesEnabled}
-            />
-            <Button
-              title="Stop Observing"
-              onPress={this.removeLocationUpdates}
-              disabled={!updatesEnabled}
-            />
           </View>
-
           <View style={styles.result}>
-            <Text>{JSON.stringify(location, null, 4)}</Text>
+            <Text>Latitude: {location?.coords?.latitude || ''}</Text>
+            <Text>Longitude: {location?.coords?.longitude || ''}</Text>
+            <Text>Heading: {location?.coords?.heading}</Text>
+            <Text>Accuracy: {location?.coords?.accuracy}</Text>
+            <Text>Altitude: {location?.coords?.altitude}</Text>
+            <Text>Speed: {location?.coords?.speed}</Text>
+            <Text>
+              Timestamp:{' '}
+              {location.timestamp
+                ? new Date(location.timestamp).toLocaleString()
+                : ''}
+            </Text>
           </View>
-        </View>
+        </ScrollView>
       </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    justifyContent: 'center',
     backgroundColor: '#F5FCFF',
-    paddingHorizontal: 12,
   },
-  optionContainer: {
-    paddingBottom: 24,
+  contentContainer: {
+    padding: 12,
   },
   option: {
     flexDirection: 'row',
@@ -318,7 +332,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#666',
     width: '100%',
-    paddingHorizontal: 16,
+    padding: 10,
   },
   buttonContainer: {
     alignItems: 'center',
