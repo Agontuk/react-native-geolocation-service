@@ -1,7 +1,6 @@
 import Foundation
 import CoreLocation
 
-let DEFAULT_ACCURACY: CLLocationAccuracy = kCLLocationAccuracyHundredMeters
 let DEFAULT_DISTANCE_FILTER: CLLocationDistance = 100
 
 enum LocationError: Int {
@@ -88,7 +87,6 @@ class RNFusedLocation: RCTEventEmitter {
     errorCallback: @escaping RCTResponseSenderBlock
   ) -> Void {
     let distanceFilter = options["distanceFilter"] as? Double ?? kCLDistanceFilterNone
-    let highAccuracy = options["enableHighAccuracy"] as? Bool ?? false
     let maximumAge = options["maximumAge"] as? Double ?? Double.infinity
     let timeout = options["timeout"] as? Double ?? Double.infinity
 
@@ -104,7 +102,7 @@ class RNFusedLocation: RCTEventEmitter {
 
     let locManager = CLLocationManager()
     locManager.delegate = self
-    locManager.desiredAccuracy = highAccuracy ? kCLLocationAccuracyBest : DEFAULT_ACCURACY
+    locManager.desiredAccuracy = getAccuracy(options)
     locManager.distanceFilter = distanceFilter
     locManager.requestLocation()
 
@@ -128,10 +126,9 @@ class RNFusedLocation: RCTEventEmitter {
   // MARK: Bridge Method
   @objc func startLocationUpdate(_ options: [String: Any]) -> Void {
     let distanceFilter = options["distanceFilter"] as? Double ?? DEFAULT_DISTANCE_FILTER
-    let highAccuracy = options["enableHighAccuracy"] as? Bool ?? false
     let significantChanges = options["useSignificantChanges"] as? Bool ?? false
 
-    locationManager.desiredAccuracy = highAccuracy ? kCLLocationAccuracyBest : DEFAULT_ACCURACY
+    locationManager.desiredAccuracy = getAccuracy(options)
     locationManager.distanceFilter = distanceFilter
     locationManager.allowsBackgroundLocationUpdates = shouldAllowBackgroundUpdate()
     locationManager.pausesLocationUpdatesAutomatically = false
@@ -190,6 +187,33 @@ class RNFusedLocation: RCTEventEmitter {
           RCTMakeAndLogError("Invalid authorization level provided", nil, nil)
       }
     #endif
+  }
+
+  private func getAccuracy(_ options: [String: Any]) -> Double {
+    let accuracyLevel = options["accuracy"] as? String ?? ""
+    let highAccuracy = options["enableHighAccuracy"] as? Bool ?? false
+
+    if accuracyLevel.isEmpty {
+      return highAccuracy ? kCLLocationAccuracyBest : kCLLocationAccuracyHundredMeters
+    }
+
+    switch accuracyLevel {
+      case "bestForNavigation":
+        return kCLLocationAccuracyBestForNavigation
+      case "best":
+        return kCLLocationAccuracyBest
+      case "nearestTenMeters":
+        return kCLLocationAccuracyNearestTenMeters
+      case "hundredMeters":
+        return kCLLocationAccuracyHundredMeters
+      case "kilometer":
+        return kCLLocationAccuracyKilometer
+      case "threeKilometers":
+        return kCLLocationAccuracyThreeKilometers
+      default:
+        RCTMakeAndLogError("Invalid accuracy '\(accuracyLevel)' provided", nil, nil)
+        return 0
+    }
   }
 
   private func shouldAllowBackgroundUpdate() -> Bool {
