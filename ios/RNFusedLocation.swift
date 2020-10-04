@@ -193,10 +193,6 @@ class RNFusedLocation: RCTEventEmitter {
     let accuracyLevel = options["accuracy"] as? String ?? ""
     let highAccuracy = options["enableHighAccuracy"] as? Bool ?? false
 
-    if accuracyLevel.isEmpty {
-      return highAccuracy ? kCLLocationAccuracyBest : kCLLocationAccuracyHundredMeters
-    }
-
     switch accuracyLevel {
       case "bestForNavigation":
         return kCLLocationAccuracyBestForNavigation
@@ -211,8 +207,7 @@ class RNFusedLocation: RCTEventEmitter {
       case "threeKilometers":
         return kCLLocationAccuracyThreeKilometers
       default:
-        RCTMakeAndLogError("Invalid accuracy '\(accuracyLevel)' provided", nil, nil)
-        return 0
+        return highAccuracy ? kCLLocationAccuracyBest : kCLLocationAccuracyHundredMeters
     }
   }
 

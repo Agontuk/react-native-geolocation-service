@@ -41,13 +41,12 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
   private static final int REQUEST_SETTINGS_SINGLE_UPDATE = 11403;
   private static final int REQUEST_SETTINGS_CONTINUOUS_UPDATE = 11404;
   private static final float DEFAULT_DISTANCE_FILTER = 100;
-  private static final int DEFAULT_ACCURACY = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
   private static final long DEFAULT_INTERVAL = 10 * 1000;  /* 10 secs */
   private static final long DEFAULT_FASTEST_INTERVAL = 5 * 1000; /* 5 sec */
 
   private boolean mShowLocationDialog = true;
   private boolean mForceRequestLocation = false;
-  private int mLocationPriority = DEFAULT_ACCURACY;
+  private int mLocationPriority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
   private long mUpdateInterval = DEFAULT_INTERVAL;
   private long mFastestInterval = DEFAULT_FASTEST_INTERVAL;
   private double mMaximumAge = Double.POSITIVE_INFINITY;
@@ -170,12 +169,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
       return;
     }
 
-    boolean highAccuracy = options.hasKey("enableHighAccuracy") &&
-      options.getBoolean("enableHighAccuracy");
-
-    // TODO: Make other PRIORITY_* constants available to the user
-    mLocationPriority = highAccuracy ? LocationRequest.PRIORITY_HIGH_ACCURACY : DEFAULT_ACCURACY;
-
+    mLocationPriority = getPriority(options);
     mTimeout = options.hasKey("timeout") ? (long) options.getDouble("timeout") : Long.MAX_VALUE;
     mMaximumAge = options.hasKey("maximumAge")
       ? options.getDouble("maximumAge")
@@ -232,11 +226,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
       return;
     }
 
-    boolean highAccuracy = options.hasKey("enableHighAccuracy")
-      && options.getBoolean("enableHighAccuracy");
-
-    // TODO: Make other PRIORITY_* constants available to the user
-    mLocationPriority = highAccuracy ? LocationRequest.PRIORITY_HIGH_ACCURACY : DEFAULT_ACCURACY;
+    mLocationPriority = getPriority(options);
     mDistanceFilter = options.hasKey("distanceFilter")
       ? (float) options.getDouble("distanceFilter")
       : DEFAULT_DISTANCE_FILTER;
@@ -274,6 +264,30 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     if (mFusedProviderClient != null && mLocationCallback != null) {
       mFusedProviderClient.removeLocationUpdates(mLocationCallback);
       mLocationCallback = null;
+    }
+  }
+
+  /**
+   * Determine location priority from user provided accuracy level
+   */
+  private int getPriority(@NonNull ReadableMap options) {
+    String accuracy = options.hasKey("accuracy") ? options.getString("accuracy") : "";
+    boolean highAccuracy = options.hasKey("enableHighAccuracy")
+      && options.getBoolean("enableHighAccuracy");
+
+    switch (accuracy) {
+      case "high":
+        return LocationRequest.PRIORITY_HIGH_ACCURACY;
+      case "balanced":
+        return LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
+      case "low":
+        return LocationRequest.PRIORITY_LOW_POWER;
+      case "passive":
+        return LocationRequest.PRIORITY_NO_POWER;
+      default:
+        return highAccuracy
+          ? LocationRequest.PRIORITY_HIGH_ACCURACY
+          : LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
     }
   }
 
