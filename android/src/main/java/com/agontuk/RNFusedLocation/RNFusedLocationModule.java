@@ -415,7 +415,9 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
       mLocationCallback = new LocationCallback() {
         @Override
         public void onLocationAvailability(LocationAvailability locationAvailability) {
-          if (!locationAvailability.isLocationAvailable()) {
+          if (!locationAvailability.isLocationAvailable() &&
+            !LocationUtils.isLocationEnabled(getContext())
+          ) {
             invokeError(
               LocationError.POSITION_UNAVAILABLE.getValue(),
               "Unable to retrieve location",
