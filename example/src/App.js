@@ -125,6 +125,10 @@ export default class App extends Component<{}> {
           console.log(error);
         },
         {
+          accuracy: {
+            android: 'high',
+            ios: 'best'
+          },
           enableHighAccuracy: this.state.highAccuracy,
           timeout: 15000,
           maximumAge: 10000,
@@ -157,6 +161,10 @@ export default class App extends Component<{}> {
           console.log(error);
         },
         {
+          accuracy: {
+            android: 'balanced',
+            ios: 'hundredMeters',
+          },
           enableHighAccuracy: this.state.highAccuracy,
           distanceFilter: 0,
           interval: 5000,

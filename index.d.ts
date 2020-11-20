@@ -3,10 +3,28 @@ declare module 'react-native-geolocation-service' {
 
   export type AuthorizationResult = 'disabled' | 'granted' | 'denied' | 'restricted'
 
+  export type AccuracyIOS =
+    | 'bestForNavigation'
+    | 'best'
+    | 'nearestTenMeters'
+    | 'hundredMeters'
+    | 'kilometer'
+    | 'threeKilometers';
+
+  export type AccuracyAndroid =
+    | 'high'
+    | 'balanced'
+    | 'low'
+    | 'passive';
+
   interface BaseOptions {
+    accuracy?: {
+      android?: AccuracyAndroid;
+      ios?: AccuracyIOS;
+    };
     enableHighAccuracy?: boolean
     distanceFilter?: number
-    showLocationDialog?: boolean,
+    showLocationDialog?: boolean
     forceRequestLocation?: boolean
   }
 
