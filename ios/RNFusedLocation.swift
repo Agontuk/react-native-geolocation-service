@@ -190,7 +190,8 @@ class RNFusedLocation: RCTEventEmitter {
   }
 
   private func getAccuracy(_ options: [String: Any]) -> Double {
-    let accuracyLevel = options["accuracy"] as? String ?? ""
+    let accuracyDict = options["accuracy"] as? [String: String] ?? [:]
+    let accuracyLevel = accuracyDict["ios"] ?? ""
     let highAccuracy = options["enableHighAccuracy"] as? Bool ?? false
 
     switch accuracyLevel {

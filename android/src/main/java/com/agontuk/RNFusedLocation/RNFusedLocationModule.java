@@ -15,6 +15,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.SystemClock;
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
@@ -271,9 +272,17 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
    * Determine location priority from user provided accuracy level
    */
   private int getPriority(@NonNull ReadableMap options) {
-    String accuracy = options.hasKey("accuracy") ? options.getString("accuracy") : "";
+    String accuracy = "";
     boolean highAccuracy = options.hasKey("enableHighAccuracy")
       && options.getBoolean("enableHighAccuracy");
+
+    if (options.hasKey("accuracy") && options.getType("accuracy") == ReadableType.Map) {
+      ReadableMap accuracyMap = options.getMap("accuracy");
+
+      if (accuracyMap.hasKey("android") && accuracyMap.getType("android") == ReadableType.String) {
+        accuracy = accuracyMap.getString("android");
+      }
+    }
 
     switch (accuracy) {
       case "high":
