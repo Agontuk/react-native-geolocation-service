@@ -1,5 +1,9 @@
 # Changelog
 
+### 5.1.0 (November 26, 2020)
+ - Android/iOS: add support for specifying accuracy level
+ - Android: only trigger error in watchPosition if location service is off
+
 ### 5.0.0 (May 30, 2020)
 #### Breaking
  - iOS: new iOS module implementation. Follow this [issue](https://github.com/Agontuk/react-native-geolocation-service/issues/173) for details.

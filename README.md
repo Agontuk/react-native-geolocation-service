@@ -73,7 +73,7 @@ When promise resolves, returns the status of the authorization.
     | -- | -- | -- | -- |
     | timeout | `ms` | `INFINITY` | Request timeout |
     | maximumAge | `ms` | `INFINITY` | How long previous location will be cached |
-    | accuracy | `object` | `--` | {<br/>&nbsp;&nbsp;&nbsp;android: [Link](docs/accuracy.md#android),<br/>&nbsp;&nbsp;&nbsp;ios: [Link](docs/accuracy.md#ios)<br/>} |
+    | accuracy | `object` | `--` | {<br/>&nbsp;&nbsp;&nbsp;android: [Link](docs/accuracy.md#android),<br/>&nbsp;&nbsp;&nbsp;ios: [Link](docs/accuracy.md#ios)<br/>}<br /><br /> If not provided or provided with invalid value, falls back to use `enableHighAccuracy` |
     | enableHighAccuracy | `bool` | `false` | Use high accuracy mode
     | distanceFilter | `m` | `0` | Minimum displacement in meters
     | showLocationDialog | `bool` | `true` | Whether to ask to enable location in Android (android only)
@@ -86,7 +86,7 @@ When promise resolves, returns the status of the authorization.
 
     | Name | Type | Default | Description |
     | -- | -- | -- | -- |
-    | accuracy | `object` | `--` | {<br/>&nbsp;&nbsp;&nbsp;android: [Link](docs/accuracy.md#android),<br/>&nbsp;&nbsp;&nbsp;ios: [Link](docs/accuracy.md#ios)<br/>} |
+    | accuracy | `object` | `--` | {<br/>&nbsp;&nbsp;&nbsp;android: [Link](docs/accuracy.md#android),<br/>&nbsp;&nbsp;&nbsp;ios: [Link](docs/accuracy.md#ios)<br/>}<br /><br /> If not provided or provided with invalid value, falls back to use `enableHighAccuracy` |
     | enableHighAccuracy | `bool` | `false` | Use high accuracy mode
     | distanceFilter | `m` | `100` | Minimum displacement between location updates in meters
     | interval | `ms` | `10000` |  Interval for active location updates (android only)
