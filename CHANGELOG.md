@@ -1,5 +1,8 @@
 # Changelog
 
+### 5.1.1 (November 28, 2020)
+ - Fix iOS `pod install` issue.
+
 ### 5.1.0 (November 26, 2020)
  - Android/iOS: add support for specifying accuracy level
  - Android: only trigger error in watchPosition if location service is off
