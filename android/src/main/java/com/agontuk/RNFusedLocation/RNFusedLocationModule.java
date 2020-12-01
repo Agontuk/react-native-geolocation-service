@@ -1,9 +1,11 @@
 package com.agontuk.RNFusedLocation;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.location.Location;
+import android.location.LocationManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -381,6 +383,20 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
           }
 
           break;
+        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+          Context context = getContext();
+
+          if (LocationUtils.isOnAirplaneMode(context) &&
+            LocationUtils.isProviderEnabled(context, LocationManager.GPS_PROVIDER)
+          ) {
+            if (isSingleUpdate) {
+              getUserLocation();
+            } else {
+              getLocationUpdates();
+            }
+
+            break;
+          }
         default:
           // TODO: we may have to handle other use case here.
           // For now just say that settings are not ok.
