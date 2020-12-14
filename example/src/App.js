@@ -122,12 +122,13 @@ export default class App extends Component<{}> {
         },
         (error) => {
           this.setState({ loading: false });
+          Alert.alert(`Code ${error.code}`, error.message);
           console.log(error);
         },
         {
           accuracy: {
             android: 'high',
-            ios: 'best'
+            ios: 'best',
           },
           enableHighAccuracy: this.state.highAccuracy,
           timeout: 15000,
