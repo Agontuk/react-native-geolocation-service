@@ -94,6 +94,7 @@ When promise resolves, returns the status of the authorization.
     | showLocationDialog | `bool` | `true` | whether to ask to enable location in Android (android only)
     | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog (android only)
     | useSignificantChanges | `bool` | false | Uses the battery-efficient native significant changes APIs to return locations. Locations will only be returned when the device detects a significant distance has been breached (iOS only)
+    | showsBackgroundLocationIndicator | `bool` | false | This setting enables a blue bar or a blue pill in the status bar on iOS. When the app moves to the background, the system uses this property to determine whether to change the status bar appearance to indicate that location services are in use. Users can tap the indicator to return to your app. (iOS only)
 
 #### `clearWatch(watchId)`
  - watchId (id returned by `watchPosition`)
