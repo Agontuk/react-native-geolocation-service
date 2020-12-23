@@ -127,11 +127,15 @@ class RNFusedLocation: RCTEventEmitter {
   @objc func startLocationUpdate(_ options: [String: Any]) -> Void {
     let distanceFilter = options["distanceFilter"] as? Double ?? DEFAULT_DISTANCE_FILTER
     let significantChanges = options["useSignificantChanges"] as? Bool ?? false
-
+    let showsBackgroundLocationIndicator = options["showsBackgroundLocationIndicator"] as? Bool ?? false
+    
     locationManager.desiredAccuracy = getAccuracy(options)
     locationManager.distanceFilter = distanceFilter
     locationManager.allowsBackgroundLocationUpdates = shouldAllowBackgroundUpdate()
     locationManager.pausesLocationUpdatesAutomatically = false
+    if #available(iOS 11.0, *) {
+      locationManager.showsBackgroundLocationIndicator = showsBackgroundLocationIndicator
+    }
 
     significantChanges
       ? locationManager.startMonitoringSignificantLocationChanges()

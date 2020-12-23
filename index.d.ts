@@ -37,6 +37,7 @@ declare module 'react-native-geolocation-service' {
     interval?: number
     fastestInterval?: number
     useSignificantChanges?: boolean
+    showsBackgroundLocationIndicator?: boolean
   }
 
   export enum PositionError {
