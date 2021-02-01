@@ -1,5 +1,11 @@
 # Changelog
 
+### 5.2.0 (February 2, 2021)
+ - Android: fix location request on airplane mode
+ - iOS: add ability to configure showsBackgroundLocationIndicator
+ - iOS: fix location delay in getCurrentPosition method
+ - iOS: add `reduced` as an accuracy option
+
 ### 5.1.1 (November 28, 2020)
  - Fix iOS `pod install` issue.
 
