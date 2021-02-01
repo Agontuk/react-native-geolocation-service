@@ -9,7 +9,8 @@ declare module 'react-native-geolocation-service' {
     | 'nearestTenMeters'
     | 'hundredMeters'
     | 'kilometer'
-    | 'threeKilometers';
+    | 'threeKilometers'
+    | 'reduced';
 
   export type AccuracyAndroid =
     | 'high'

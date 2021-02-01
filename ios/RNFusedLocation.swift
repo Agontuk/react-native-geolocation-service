@@ -211,6 +211,12 @@ class RNFusedLocation: RCTEventEmitter {
         return kCLLocationAccuracyKilometer
       case "threeKilometers":
         return kCLLocationAccuracyThreeKilometers
+      case "reduced":
+        if #available(iOS 14.0, *) {
+            return kCLLocationAccuracyReduced
+        } else {
+            return kCLLocationAccuracyThreeKilometers
+        }
       default:
         return highAccuracy ? kCLLocationAccuracyBest : kCLLocationAccuracyHundredMeters
     }

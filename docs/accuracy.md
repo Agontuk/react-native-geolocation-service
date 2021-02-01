@@ -21,3 +21,4 @@
 | hundredMeters | Accurate to within one hundred meters. |
 | kilometer | Accurate to the nearest kilometer. |
 | threeKilometers | Accurate to the nearest three kilometers. |
+| reduced | Used when an app does not need accurate location data. |
