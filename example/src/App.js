@@ -163,8 +163,8 @@ export default class App extends Component<{}> {
         },
         {
           accuracy: {
-            android: 'balanced',
-            ios: 'hundredMeters',
+            android: 'high',
+            ios: 'best',
           },
           enableHighAccuracy: this.state.highAccuracy,
           distanceFilter: 0,

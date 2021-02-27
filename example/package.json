@@ -11,20 +11,20 @@
   },
   "dependencies": {
     "@voximplant/react-native-foreground-service": "^2.0.0",
-    "react": "16.11.0",
-    "react-native": "0.62.2",
+    "react": "16.13.1",
+    "react-native": "0.63.4",
     "react-native-geolocation-service": "../",
     "react-native-maps": "0.27.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.9.0",
-    "@babel/runtime": "^7.9.2",
+    "@babel/core": "^7.8.4",
+    "@babel/runtime": "^7.8.4",
     "@react-native-community/eslint-config": "^1.1.0",
-    "babel-jest": "^25.4.0",
-    "eslint": "^6.8.0",
-    "jest": "^25.4.0",
+    "babel-jest": "^25.1.0",
+    "eslint": "^6.5.1",
+    "jest": "^25.1.0",
     "metro-react-native-babel-preset": "^0.59.0",
-    "react-test-renderer": "16.11.0"
+    "react-test-renderer": "16.13.1"
   },
   "jest": {
     "preset": "react-native"
