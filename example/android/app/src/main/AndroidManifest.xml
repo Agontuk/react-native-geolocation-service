@@ -28,6 +28,7 @@
 
       <service
         android:name="com.voximplant.foregroundservice.VIForegroundService"
+        android:foregroundServiceType="location"
         android:exported="false">
       </service>
 
