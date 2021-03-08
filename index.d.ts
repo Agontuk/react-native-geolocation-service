@@ -9,7 +9,8 @@ declare module 'react-native-geolocation-service' {
     | 'nearestTenMeters'
     | 'hundredMeters'
     | 'kilometer'
-    | 'threeKilometers';
+    | 'threeKilometers'
+    | 'reduced';
 
   export type AccuracyAndroid =
     | 'high'
@@ -37,6 +38,7 @@ declare module 'react-native-geolocation-service' {
     interval?: number
     fastestInterval?: number
     useSignificantChanges?: boolean
+    showsBackgroundLocationIndicator?: boolean
   }
 
   export enum PositionError {

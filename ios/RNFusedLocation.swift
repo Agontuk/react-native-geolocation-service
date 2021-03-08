@@ -105,7 +105,7 @@ class RNFusedLocation: RCTEventEmitter {
     locManager.delegate = self
     locManager.desiredAccuracy = getAccuracy(options)
     locManager.distanceFilter = distanceFilter
-    locManager.requestLocation()
+    locManager.startUpdatingLocation()
 
     self.successCallback = successCallback
     self.errorCallback = errorCallback
@@ -128,11 +128,15 @@ class RNFusedLocation: RCTEventEmitter {
   @objc func startLocationUpdate(_ options: [String: Any]) -> Void {
     let distanceFilter = options["distanceFilter"] as? Double ?? DEFAULT_DISTANCE_FILTER
     let significantChanges = options["useSignificantChanges"] as? Bool ?? false
+    let showsBackgroundLocationIndicator = options["showsBackgroundLocationIndicator"] as? Bool ?? false
 
     locationManager.desiredAccuracy = getAccuracy(options)
     locationManager.distanceFilter = distanceFilter
     locationManager.allowsBackgroundLocationUpdates = shouldAllowBackgroundUpdate()
     locationManager.pausesLocationUpdatesAutomatically = false
+    if #available(iOS 11.0, *) {
+      locationManager.showsBackgroundLocationIndicator = showsBackgroundLocationIndicator
+    }
 
     significantChanges
       ? locationManager.startMonitoringSignificantLocationChanges()
@@ -218,6 +222,12 @@ class RNFusedLocation: RCTEventEmitter {
         return kCLLocationAccuracyKilometer
       case "threeKilometers":
         return kCLLocationAccuracyThreeKilometers
+      case "reduced":
+        if #available(iOS 14.0, *) {
+            return kCLLocationAccuracyReduced
+        } else {
+            return kCLLocationAccuracyThreeKilometers
+        }
       default:
         return highAccuracy ? kCLLocationAccuracyBest : kCLLocationAccuracyHundredMeters
     }
@@ -342,10 +352,11 @@ extension RNFusedLocation: CLLocationManagerDelegate {
     successCallback!([locationData])
 
     // Cleanup
+    manager.stopUpdatingLocation()
+    manager.delegate = nil
     timeoutTimer?.invalidate()
     successCallback = nil
     errorCallback = nil
-    manager.delegate = nil
   }
 
   func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -382,9 +393,10 @@ extension RNFusedLocation: CLLocationManagerDelegate {
     errorCallback!([errorData])
 
     // Cleanup
+    manager.stopUpdatingLocation()
+    manager.delegate = nil
     timeoutTimer?.invalidate()
     successCallback = nil
     errorCallback = nil
-    manager.delegate = nil
   }
 }
