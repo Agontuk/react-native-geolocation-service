@@ -10,9 +10,9 @@ let updatesEnabled = false;
 const Geolocation = {
   setRNConfiguration: (config) => {}, // eslint-disable-line no-unused-vars
 
-  getCurrentAuthorization: async () => {
+  getCurrentAuthorization: () => {
     if (Platform.OS !== 'ios') {
-      Promise.reject('getCurrentAuthorization is only for iOS');
+      return Promise.reject('getCurrentAuthorization is only for iOS');
     }
 
     return RNFusedLocation.getCurrentAuthorization();
