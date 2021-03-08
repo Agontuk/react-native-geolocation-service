@@ -10,6 +10,14 @@ let updatesEnabled = false;
 const Geolocation = {
   setRNConfiguration: (config) => {}, // eslint-disable-line no-unused-vars
 
+  getCurrentAuthorization: async () => {
+    if (Platform.OS !== 'ios') {
+      Promise.reject('getCurrentAuthorization is only for iOS');
+    }
+
+    return RNFusedLocation.getCurrentAuthorization();
+  },
+
   requestAuthorization: async (authorizationLevel) => {
     if (Platform.OS !== 'ios') {
       return Promise.reject('requestAuthorization is only for iOS');
@@ -31,6 +39,22 @@ const Geolocation = {
 
     // Right now, we're assuming user already granted location permission.
     RNFusedLocation.getCurrentPosition(options, success, error);
+  },
+
+  watchPermission: (changed) => {
+    if (Platform.OS !== 'ios') {
+      throw new Error('watchPermission is only for iOS');
+    }
+    if (!changed) {
+      throw new Error('Must provide a changed callback');
+    }
+
+    const subscription = LocationEventEmitter.addListener('geolocationPermissionDidChange', changed);
+    RNFusedLocation.permissionListenerAdded();
+    return () => {
+      RNFusedLocation.permissionListenerRemoved();
+      subscription.remove();
+    };
   },
 
   watchPosition: (success, error = null, options = {}) => {

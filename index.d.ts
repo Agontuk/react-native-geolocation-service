@@ -9,8 +9,7 @@ declare module 'react-native-geolocation-service' {
     | 'nearestTenMeters'
     | 'hundredMeters'
     | 'kilometer'
-    | 'threeKilometers'
-    | 'reduced';
+    | 'threeKilometers';
 
   export type AccuracyAndroid =
     | 'high'
@@ -38,7 +37,6 @@ declare module 'react-native-geolocation-service' {
     interval?: number
     fastestInterval?: number
     useSignificantChanges?: boolean
-    showsBackgroundLocationIndicator?: boolean
   }
 
   export enum PositionError {
@@ -71,9 +69,13 @@ declare module 'react-native-geolocation-service' {
     mocked?: boolean;
   }
 
+  type PermissionChangedCallback = (permission: AuthorizationResult) => void
+
   type SuccessCallback = (position: GeoPosition) => void
 
   type ErrorCallback = (error: GeoError) => void
+
+  export function getCurrentAuthorization(): Promise<AuthorizationResult | null>
 
   export function requestAuthorization(
     authorizationLevel: AuthorizationLevel
@@ -84,6 +86,10 @@ declare module 'react-native-geolocation-service' {
     errorCallback?: ErrorCallback,
     options?: GeoOptions
   ): void
+
+  export function watchPermission(
+    changedCallback: PermissionChangedCallback
+  ): () => void
 
   export function watchPosition(
     successCallback: SuccessCallback,

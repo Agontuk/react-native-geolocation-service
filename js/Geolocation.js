@@ -20,6 +20,10 @@ const Geolocation = {
     navigator.geolocation.getCurrentPosition(success, error, options);
   },
 
+  watchPermission: function () {
+    throw new Error('Method not supported by browser')
+  },
+
   watchPosition: function (success, error, options) {
     if (!success) {
       throw new Error('Must provide a success callback');

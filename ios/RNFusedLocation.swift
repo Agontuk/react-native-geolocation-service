@@ -24,6 +24,7 @@ class RNFusedLocation: RCTEventEmitter {
   private var resolveAuthorizationStatus: RCTPromiseResolveBlock? = nil
   private var successCallback: RCTResponseSenderBlock? = nil
   private var errorCallback: RCTResponseSenderBlock? = nil
+  private var permissionListenerCount: Int = 0
 
   override init() {
     super.init()
@@ -43,6 +44,15 @@ class RNFusedLocation: RCTEventEmitter {
 
     locationManager.delegate = nil;
   }
+  
+  // MARK: Bridge Method
+  @objc(getCurrentAuthorization:reject:)
+  func getCurrentAuthorization(
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) -> Void {
+    resolve(getCurrentAuthorizationStatus())
+  }
 
   // MARK: Bridge Method
   @objc func requestAuthorization(
@@ -56,19 +66,10 @@ class RNFusedLocation: RCTEventEmitter {
       resolve(AuthorizationStatus.disabled.rawValue)
       return
     }
-
-    switch CLLocationManager.authorizationStatus() {
-      case .authorizedWhenInUse, .authorizedAlways:
-        resolve(AuthorizationStatus.granted.rawValue)
-        return
-      case .denied:
-        resolve(AuthorizationStatus.denied.rawValue)
-        return
-      case .restricted:
-        resolve(AuthorizationStatus.restricted.rawValue)
-        return
-      default:
-        break
+    
+    if let currentStatus = getCurrentAuthorizationStatus() {
+      resolve(currentStatus)
+      return
     }
 
     resolveAuthorizationStatus = resolve
@@ -104,7 +105,7 @@ class RNFusedLocation: RCTEventEmitter {
     locManager.delegate = self
     locManager.desiredAccuracy = getAccuracy(options)
     locManager.distanceFilter = distanceFilter
-    locManager.startUpdatingLocation()
+    locManager.requestLocation()
 
     self.successCallback = successCallback
     self.errorCallback = errorCallback
@@ -127,15 +128,11 @@ class RNFusedLocation: RCTEventEmitter {
   @objc func startLocationUpdate(_ options: [String: Any]) -> Void {
     let distanceFilter = options["distanceFilter"] as? Double ?? DEFAULT_DISTANCE_FILTER
     let significantChanges = options["useSignificantChanges"] as? Bool ?? false
-    let showsBackgroundLocationIndicator = options["showsBackgroundLocationIndicator"] as? Bool ?? false
 
     locationManager.desiredAccuracy = getAccuracy(options)
     locationManager.distanceFilter = distanceFilter
     locationManager.allowsBackgroundLocationUpdates = shouldAllowBackgroundUpdate()
     locationManager.pausesLocationUpdatesAutomatically = false
-    if #available(iOS 11.0, *) {
-      locationManager.showsBackgroundLocationIndicator = showsBackgroundLocationIndicator
-    }
 
     significantChanges
       ? locationManager.startMonitoringSignificantLocationChanges()
@@ -152,6 +149,16 @@ class RNFusedLocation: RCTEventEmitter {
       : locationManager.stopUpdatingLocation()
 
     observing = false
+  }
+  
+  // MARK: Bridge Method
+  @objc func permissionListenerAdded() -> Void {
+    permissionListenerCount += 1
+  }
+  
+  // MARK: Bridge Method
+  @objc func permissionListenerRemoved() -> Void {
+    permissionListenerCount -= 1
   }
 
   @objc func timerFired(timer: Timer) -> Void {
@@ -211,12 +218,6 @@ class RNFusedLocation: RCTEventEmitter {
         return kCLLocationAccuracyKilometer
       case "threeKilometers":
         return kCLLocationAccuracyThreeKilometers
-      case "reduced":
-        if #available(iOS 14.0, *) {
-            return kCLLocationAccuracyReduced
-        } else {
-            return kCLLocationAccuracyThreeKilometers
-        }
       default:
         return highAccuracy ? kCLLocationAccuracyBest : kCLLocationAccuracyHundredMeters
     }
@@ -230,6 +231,23 @@ class RNFusedLocation: RCTEventEmitter {
     }
 
     return false
+  }
+  
+  private func getAuthorizationStatusString(_ authorizationStatus: CLAuthorizationStatus) -> String? {
+    switch authorizationStatus {
+      case .authorizedWhenInUse, .authorizedAlways:
+        return AuthorizationStatus.granted.rawValue
+      case .denied:
+        return AuthorizationStatus.denied.rawValue
+      case .restricted:
+        return AuthorizationStatus.restricted.rawValue
+      default:
+        return nil
+    }
+  }
+  
+  private func getCurrentAuthorizationStatus() -> String? {
+    return getAuthorizationStatusString(CLLocationManager.authorizationStatus())
   }
 
   private func generateErrorResponse(code: Int, message: String = "") -> [String: Any] {
@@ -268,7 +286,7 @@ extension RNFusedLocation {
   }
 
   override func supportedEvents() -> [String]! {
-    return ["geolocationDidChange", "geolocationError"]
+    return ["geolocationDidChange", "geolocationError", "geolocationPermissionDidChange"]
   }
 
   override func startObserving() -> Void {
@@ -282,22 +300,20 @@ extension RNFusedLocation {
 
 extension RNFusedLocation: CLLocationManagerDelegate {
   func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-    if status == .notDetermined || resolveAuthorizationStatus == nil {
+    if status == .notDetermined {
       return
     }
+    
+    let statusString = getAuthorizationStatusString(status)
 
-    switch status {
-      case .authorizedWhenInUse, .authorizedAlways:
-        resolveAuthorizationStatus?(AuthorizationStatus.granted.rawValue)
-      case .denied:
-        resolveAuthorizationStatus?(AuthorizationStatus.denied.rawValue)
-      case .restricted:
-        resolveAuthorizationStatus?(AuthorizationStatus.restricted.rawValue)
-      default:
-        break
+    if let resolve = resolveAuthorizationStatus {
+      resolve(statusString)
+      resolveAuthorizationStatus = nil
     }
-
-    resolveAuthorizationStatus = nil
+    
+    if (permissionListenerCount > 0) {
+      sendEvent(withName: "geolocationPermissionDidChange", body: statusString)
+    }
   }
 
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -326,11 +342,10 @@ extension RNFusedLocation: CLLocationManagerDelegate {
     successCallback!([locationData])
 
     // Cleanup
-    manager.stopUpdatingLocation()
-    manager.delegate = nil
     timeoutTimer?.invalidate()
     successCallback = nil
     errorCallback = nil
+    manager.delegate = nil
   }
 
   func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -367,10 +382,9 @@ extension RNFusedLocation: CLLocationManagerDelegate {
     errorCallback!([errorData])
 
     // Cleanup
-    manager.stopUpdatingLocation()
-    manager.delegate = nil
     timeoutTimer?.invalidate()
     successCallback = nil
     errorCallback = nil
+    manager.delegate = nil
   }
 }
