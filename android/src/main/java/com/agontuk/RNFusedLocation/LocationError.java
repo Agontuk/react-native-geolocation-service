@@ -8,7 +8,7 @@ public enum LocationError {
   SETTINGS_NOT_SATISFIED(5),
   INTERNAL_ERROR(-1);
 
-  private int value;
+  private final int value;
 
   LocationError(int value) {
     this.value = value;
