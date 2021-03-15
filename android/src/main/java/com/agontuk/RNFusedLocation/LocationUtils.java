@@ -8,6 +8,8 @@ import android.Manifest;
 import android.os.Build;
 import android.text.TextUtils;
 import android.provider.Settings;
+
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 
 import com.facebook.react.bridge.Arguments;
@@ -78,13 +80,16 @@ public class LocationUtils {
   /**
    * Build error response for error callback.
    */
-  public static WritableMap buildError(int code, String message) {
-    WritableMap error = Arguments.createMap();
-    error.putInt("code", code);
+  public static WritableMap buildError(LocationError locationError, @Nullable String message) {
+    String msg = message;
 
-    if (message != null) {
-      error.putString("message", message);
+    if (msg == null) {
+      msg = getDefaultErrorMessage(locationError);
     }
+
+    WritableMap error = Arguments.createMap();
+    error.putInt("code", locationError.getValue());
+    error.putString("message", msg);
 
     return error;
   }
@@ -107,5 +112,23 @@ public class LocationUtils {
     }
 
     return map;
+  }
+
+  private static String getDefaultErrorMessage(LocationError locationError) {
+    switch (locationError) {
+      case PERMISSION_DENIED:
+        return "Location permission not granted.";
+      case POSITION_UNAVAILABLE:
+        return "No location provider available.";
+      case TIMEOUT:
+        return "Location request timed out.";
+      case PLAY_SERVICE_NOT_AVAILABLE:
+        return "Google play service is not available.";
+      case SETTINGS_NOT_SATISFIED:
+        return "Location settings are not satisfied.";
+      case INTERNAL_ERROR:
+      default:
+        return "Internal error occurred";
+    }
   }
 }
