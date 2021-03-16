@@ -28,21 +28,21 @@ import com.google.android.gms.tasks.OnSuccessListener;
 
 import java.util.Random;
 
-public class FusedLocationManager implements LocationManager {
+public class FusedLocationProvider implements LocationProvider {
   private final ReactApplicationContext context;
   private final FusedLocationProviderClient fusedLocationProviderClient;
   private final SettingsClient settingsClient;
 
   private int activityRequestCode;
+  private LocationChangeListener locationChangeListener;
   private LocationOptions locationOptions;
-  private LocationListener locationListener;
   private LocationRequest locationRequest;
 
   private boolean isSingleUpdate = false;
   private final LocationCallback locationCallback = new LocationCallback() {
     @Override
     public void onLocationResult(LocationResult locationResult) {
-      locationListener.onLocationChange(locationResult.getLastLocation());
+      locationChangeListener.onLocationChange(locationResult.getLastLocation());
 
       if (isSingleUpdate) {
         timeoutHandler.removeCallbacks(timeoutRunnable);
@@ -55,7 +55,7 @@ public class FusedLocationManager implements LocationManager {
       if (!locationAvailability.isLocationAvailable() &&
         !LocationUtils.isLocationEnabled(context)
       ) {
-        locationListener.onLocationError(
+        locationChangeListener.onLocationError(
           LocationError.POSITION_UNAVAILABLE,
           "Unable to retrieve location."
         );
@@ -66,12 +66,12 @@ public class FusedLocationManager implements LocationManager {
   private final Runnable timeoutRunnable = new Runnable() {
     @Override
     public void run() {
-      locationListener.onLocationError(LocationError.TIMEOUT, null);
+      locationChangeListener.onLocationError(LocationError.TIMEOUT, null);
       fusedLocationProviderClient.removeLocationUpdates(locationCallback);
     }
   };
 
-  public FusedLocationManager(ReactApplicationContext context) {
+  public FusedLocationProvider(ReactApplicationContext context) {
     this.context = context;
     this.fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
     this.settingsClient = LocationServices.getSettingsClient(context);
@@ -79,9 +79,9 @@ public class FusedLocationManager implements LocationManager {
 
   @SuppressLint("MissingPermission")
   @Override
-  public void getCurrentLocation(final LocationOptions locationOptions, final LocationListener locationListener) {
+  public void getCurrentLocation(final LocationOptions locationOptions, final LocationChangeListener locationChangeListener) {
     this.isSingleUpdate = true;
-    this.locationListener = locationListener;
+    this.locationChangeListener = locationChangeListener;
     this.locationOptions = locationOptions;
     this.locationRequest = buildLocationRequest(locationOptions);
 
@@ -93,7 +93,7 @@ public class FusedLocationManager implements LocationManager {
             (System.currentTimeMillis() - location.getTime()) < locationOptions.getMaximumAge()
           ) {
             Log.i(RNFusedLocationModule.TAG, "returning cached location.");
-            locationListener.onLocationChange(location);
+            locationChangeListener.onLocationChange(location);
             return;
           }
 
@@ -126,16 +126,16 @@ public class FusedLocationManager implements LocationManager {
       startLocationUpdates();
     } else {
       LocationError error = !forceRequestLocation ? LocationError.SETTINGS_NOT_SATISFIED : LocationError.POSITION_UNAVAILABLE;
-      locationListener.onLocationError(error, null);
+      locationChangeListener.onLocationError(error, null);
     }
 
     return true;
   }
 
   @Override
-  public void requestLocationUpdates(LocationOptions locationOptions, final LocationListener locationListener) {
+  public void requestLocationUpdates(LocationOptions locationOptions, final LocationChangeListener locationChangeListener) {
     this.isSingleUpdate = false;
-    this.locationListener = locationListener;
+    this.locationChangeListener = locationChangeListener;
     this.locationOptions = locationOptions;
     this.locationRequest = buildLocationRequest(locationOptions);
     checkLocationSettings();
@@ -178,7 +178,7 @@ public class FusedLocationManager implements LocationManager {
           switch (exception.getStatusCode()) {
             case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
               if (!locationOptions.isShowLocationDialog()) {
-                locationListener.onLocationError(LocationError.SETTINGS_NOT_SATISFIED, null);
+                locationChangeListener.onLocationError(LocationError.SETTINGS_NOT_SATISFIED, null);
                 break;
               }
 
@@ -187,7 +187,7 @@ public class FusedLocationManager implements LocationManager {
                 Activity activity = context.getCurrentActivity();
 
                 if (activity == null) {
-                  locationListener.onLocationError(
+                  locationChangeListener.onLocationError(
                     LocationError.INTERNAL_ERROR,
                     "Tried to open location dialog while not attached to an Activity."
                   );
@@ -197,9 +197,9 @@ public class FusedLocationManager implements LocationManager {
                 activityRequestCode = getActivityRequestCode();
                 resolvable.startResolutionForResult(activity, activityRequestCode);
               } catch (IntentSender.SendIntentException sie) {
-                locationListener.onLocationError(LocationError.INTERNAL_ERROR, null);
+                locationChangeListener.onLocationError(LocationError.INTERNAL_ERROR, null);
               } catch (ClassCastException cce) {
-                locationListener.onLocationError(LocationError.INTERNAL_ERROR, null);
+                locationChangeListener.onLocationError(LocationError.INTERNAL_ERROR, null);
               }
 
               break;
@@ -211,7 +211,7 @@ public class FusedLocationManager implements LocationManager {
                 break;
               }
             default:
-              locationListener.onLocationError(LocationError.SETTINGS_NOT_SATISFIED, null);
+              locationChangeListener.onLocationError(LocationError.SETTINGS_NOT_SATISFIED, null);
               break;
           }
         }

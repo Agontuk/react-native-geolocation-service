@@ -19,13 +19,13 @@ import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEm
 
 public class RNFusedLocationModule extends ReactContextBaseJavaModule implements ActivityEventListener {
   public static final String TAG = "RNFusedLocation";
-  private final LocationManager locationManager;
+  private final LocationProvider locationProvider;
 
   public RNFusedLocationModule(ReactApplicationContext reactContext) {
     super(reactContext);
 
     reactContext.addActivityEventListener(this);
-    this.locationManager = createLocationManager();
+    this.locationProvider = createLocationProvider();
 
     Log.i(TAG, TAG + " initialized");
   }
@@ -38,7 +38,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
 
   @Override
   public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
-    locationManager.onActivityResult(requestCode, resultCode);
+    locationProvider.onActivityResult(requestCode, resultCode);
   }
 
   @Override
@@ -57,7 +57,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
 
     LocationOptions locationOptions = LocationOptions.fromReadableMap(options);
 
-    locationManager.getCurrentLocation(locationOptions, new LocationListener() {
+    locationProvider.getCurrentLocation(locationOptions, new LocationChangeListener() {
       @Override
       public void onLocationChange(Location location) {
         success.invoke(LocationUtils.locationToMap(location));
@@ -84,7 +84,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
 
     LocationOptions locationOptions = LocationOptions.fromReadableMap(options);
 
-    locationManager.requestLocationUpdates(locationOptions, new LocationListener() {
+    locationProvider.requestLocationUpdates(locationOptions, new LocationChangeListener() {
       @Override
       public void onLocationChange(Location location) {
         emitEvent("geolocationDidChange", LocationUtils.locationToMap(location));
@@ -99,17 +99,17 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
 
   @ReactMethod
   public void stopObserving() {
-    locationManager.removeLocationUpdates();
+    locationProvider.removeLocationUpdates();
   }
 
-  private LocationManager createLocationManager() {
+  private LocationProvider createLocationProvider() {
     ReactApplicationContext context = getContext();
 
     if (LocationUtils.isGooglePlayServicesAvailable(context)) {
-      return new FusedLocationManager(getContext());
+      return new FusedLocationProvider(getContext());
     }
 
-    return new AndroidLocationManager();
+    return new LocationManagerProvider();
   }
 
   private void emitEvent(String eventName, WritableMap data) {
