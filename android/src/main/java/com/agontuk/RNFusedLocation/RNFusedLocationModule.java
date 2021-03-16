@@ -24,6 +24,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
   public RNFusedLocationModule(ReactApplicationContext reactContext) {
     super(reactContext);
 
+    reactContext.addActivityEventListener(this);
     this.locationManager = createLocationManager();
 
     Log.i(TAG, TAG + " initialized");
@@ -105,7 +106,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     ReactApplicationContext context = getContext();
 
     if (LocationUtils.isGooglePlayServicesAvailable(context)) {
-      return new FusedLocationManager();
+      return new FusedLocationManager(getContext());
     }
 
     return new AndroidLocationManager();
