@@ -106,10 +106,10 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     ReactApplicationContext context = getContext();
 
     if (LocationUtils.isGooglePlayServicesAvailable(context)) {
-      return new FusedLocationProvider(getContext());
+      return new FusedLocationProvider(context);
     }
 
-    return new LocationManagerProvider();
+    return new LocationManagerProvider(context);
   }
 
   private void emitEvent(String eventName, WritableMap data) {
