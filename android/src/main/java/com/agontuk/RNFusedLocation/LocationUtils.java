@@ -6,6 +6,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.Manifest;
 import android.os.Build;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.provider.Settings;
 
@@ -19,6 +20,17 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
 public class LocationUtils {
+  /**
+   * Calculates the age of a location fix in milliseconds
+   */
+  public static long getLocationAge(Location location) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+      return (SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos()) / 1000000;
+    }
+
+    return System.currentTimeMillis() - location.getTime();
+  }
+
   /**
    * Check if location permissions are granted.
    */

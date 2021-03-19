@@ -90,7 +90,7 @@ public class FusedLocationProvider implements LocationProvider {
         @Override
         public void onSuccess(Location location) {
           if (location != null &&
-            (System.currentTimeMillis() - location.getTime()) < locationOptions.getMaximumAge()
+            LocationUtils.getLocationAge(location) < locationOptions.getMaximumAge()
           ) {
             Log.i(RNFusedLocationModule.TAG, "returning cached location.");
             locationChangeListener.onLocationChange(location);
