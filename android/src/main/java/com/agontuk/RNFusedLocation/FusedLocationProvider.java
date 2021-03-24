@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.IntentSender;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -205,7 +206,7 @@ public class FusedLocationProvider implements LocationProvider {
               break;
             case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
               if (LocationUtils.isOnAirplaneMode(context) &&
-                LocationUtils.isProviderEnabled(context, android.location.LocationManager.GPS_PROVIDER)
+                LocationUtils.isProviderEnabled(context, LocationManager.GPS_PROVIDER)
               ) {
                 startLocationUpdates();
                 break;

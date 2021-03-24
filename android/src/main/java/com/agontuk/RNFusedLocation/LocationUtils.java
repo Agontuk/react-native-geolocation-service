@@ -1,5 +1,6 @@
 package com.agontuk.RNFusedLocation;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -52,15 +53,22 @@ public class LocationUtils {
   /**
    * Check if airplane mode is on/off
    */
+  @SuppressWarnings("deprecation")
   public static boolean isOnAirplaneMode(Context context) {
-    return Settings.System.getInt(context.getContentResolver(), Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
+    ContentResolver contentResolver = context.getContentResolver();
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+      return Settings.Global.getInt(contentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
+    }
+
+    return Settings.System.getInt(contentResolver, Settings.System.AIRPLANE_MODE_ON, 0) != 0;
   }
 
   /**
    * Check if location is enabled on the device.
    */
   public static boolean isLocationEnabled(Context context) {
-    int locationMode = 0;
+    int locationMode;
     String locationProviders;
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
