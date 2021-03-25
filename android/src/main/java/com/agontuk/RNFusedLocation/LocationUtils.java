@@ -124,7 +124,13 @@ public class LocationUtils {
     coords.putDouble("accuracy", location.getAccuracy());
     coords.putDouble("heading", location.getBearing());
     coords.putDouble("speed", location.getSpeed());
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      coords.putDouble("altitudeAccuracy", location.getVerticalAccuracyMeters());
+    }
+
     map.putMap("coords", coords);
+    map.putString("provider", location.getProvider());
     map.putDouble("timestamp", location.getTime());
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {

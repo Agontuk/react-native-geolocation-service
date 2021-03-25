@@ -62,13 +62,14 @@ declare module 'react-native-geolocation-service' {
     altitude: number | null
     heading: number | null
     speed: number | null
-    altitudeAccuracy: number | null
+    altitudeAccuracy?: number | null
   }
 
   export interface GeoPosition {
     coords: GeoCoordinates
     timestamp: number
     mocked?: boolean;
+    provider?: 'fused' | 'gps' | 'network' | 'passive';
   }
 
   type SuccessCallback = (position: GeoPosition) => void
