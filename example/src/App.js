@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Button,
@@ -18,25 +18,24 @@ import VIForegroundService from '@voximplant/react-native-foreground-service';
 import MapView from './MapView';
 import appConfig from '../app.json';
 
-export default class App extends Component<{}> {
-  watchId = null;
+export default function App() {
+  const [forceLocation, setForceLocation] = useState(true);
+  const [highAccuracy, setHighAccuracy] = useState(true);
+  const [locationDialog, setLocationDialog] = useState(true);
+  const [significantChanges, setSignificantChanges] = useState(false);
+  const [observing, setObserving] = useState(false);
+  const [foregroundService, setForegroundService] = useState(false);
+  const [location, setLocation] = useState(null);
 
-  state = {
-    forceLocation: true,
-    highAccuracy: true,
-    loading: false,
-    showLocationDialog: true,
-    significantChanges: false,
-    updatesEnabled: false,
-    foregroundService: false,
-    location: {},
-  };
+  const watchId = useRef(null);
 
-  componentWillUnmount() {
-    this.removeLocationUpdates();
-  }
+  useEffect(() => {
+    return () => {
+      removeLocationUpdates();
+    };
+  }, [removeLocationUpdates]);
 
-  hasLocationPermissionIOS = async () => {
+  const hasPermissionIOS = async () => {
     const openSetting = () => {
       Linking.openSettings().catch(() => {
         Alert.alert('Unable to open settings');
@@ -66,9 +65,9 @@ export default class App extends Component<{}> {
     return false;
   };
 
-  hasLocationPermission = async () => {
+  const hasLocationPermission = async () => {
     if (Platform.OS === 'ios') {
-      const hasPermission = await this.hasLocationPermissionIOS();
+      const hasPermission = await hasPermissionIOS();
       return hasPermission;
     }
 
@@ -107,87 +106,86 @@ export default class App extends Component<{}> {
     return false;
   };
 
-  getLocation = async () => {
-    const hasLocationPermission = await this.hasLocationPermission();
+  const getLocation = async () => {
+    const hasPermission = await hasLocationPermission();
 
-    if (!hasLocationPermission) {
+    if (!hasPermission) {
       return;
     }
 
-    this.setState({ loading: true }, () => {
-      Geolocation.getCurrentPosition(
-        (position) => {
-          this.setState({ location: position, loading: false });
-          console.log(position);
+    Geolocation.getCurrentPosition(
+      (position) => {
+        setLocation(position);
+        console.log(position);
+      },
+      (error) => {
+        Alert.alert(`Code ${error.code}`, error.message);
+        setLocation(null);
+        console.log(error);
+      },
+      {
+        accuracy: {
+          android: 'high',
+          ios: 'best',
         },
-        (error) => {
-          this.setState({ loading: false });
-          Alert.alert(`Code ${error.code}`, error.message);
-          console.log(error);
-        },
-        {
-          accuracy: {
-            android: 'high',
-            ios: 'best',
-          },
-          enableHighAccuracy: this.state.highAccuracy,
-          timeout: 15000,
-          maximumAge: 10000,
-          distanceFilter: 0,
-          forceRequestLocation: this.state.forceLocation,
-          showLocationDialog: this.state.showLocationDialog,
-        },
-      );
-    });
+        enableHighAccuracy: highAccuracy,
+        timeout: 15000,
+        maximumAge: 10000,
+        distanceFilter: 0,
+        forceRequestLocation: forceLocation,
+        showLocationDialog: locationDialog,
+      },
+    );
   };
 
-  getLocationUpdates = async () => {
-    const hasLocationPermission = await this.hasLocationPermission();
+  const getLocationUpdates = async () => {
+    const hasPermission = await hasLocationPermission();
 
-    if (!hasLocationPermission) {
+    if (!hasPermission) {
       return;
     }
 
-    if (Platform.OS === 'android' && this.state.foregroundService) {
-      await this.startForegroundService();
+    if (Platform.OS === 'android' && foregroundService) {
+      await startForegroundService();
     }
 
-    this.setState({ updatesEnabled: true }, () => {
-      this.watchId = Geolocation.watchPosition(
-        (position) => {
-          this.setState({ location: position });
-          console.log(position);
+    setObserving(true);
+
+    watchId.current = Geolocation.watchPosition(
+      (position) => {
+        setLocation(position);
+        console.log(position);
+      },
+      (error) => {
+        setLocation(null);
+        console.log(error);
+      },
+      {
+        accuracy: {
+          android: 'high',
+          ios: 'best',
         },
-        (error) => {
-          console.log(error);
-        },
-        {
-          accuracy: {
-            android: 'high',
-            ios: 'best',
-          },
-          enableHighAccuracy: this.state.highAccuracy,
-          distanceFilter: 0,
-          interval: 5000,
-          fastestInterval: 2000,
-          forceRequestLocation: this.state.forceLocation,
-          showLocationDialog: this.state.showLocationDialog,
-          useSignificantChanges: this.state.significantChanges,
-        },
-      );
-    });
+        enableHighAccuracy: highAccuracy,
+        distanceFilter: 0,
+        interval: 5000,
+        fastestInterval: 2000,
+        forceRequestLocation: forceLocation,
+        showLocationDialog: locationDialog,
+        useSignificantChanges: significantChanges,
+      },
+    );
   };
 
-  removeLocationUpdates = () => {
-    if (this.watchId !== null) {
-      this.stopForegroundService();
-      Geolocation.clearWatch(this.watchId);
-      this.watchId = null;
-      this.setState({ updatesEnabled: false });
+  const removeLocationUpdates = useCallback(() => {
+    if (watchId.current !== null) {
+      stopForegroundService();
+      Geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+      setObserving(false);
     }
-  };
+  }, [stopForegroundService]);
 
-  startForegroundService = async () => {
+  const startForegroundService = async () => {
     if (Platform.Version >= 26) {
       await VIForegroundService.createNotificationChannel({
         id: 'locationChannel',
@@ -206,118 +204,94 @@ export default class App extends Component<{}> {
     });
   };
 
-  stopForegroundService = () => {
-    if (this.state.foregroundService) {
-      VIForegroundService.stopService().catch((err) => err);
-    }
-  };
+  const stopForegroundService = useCallback(() => {
+    VIForegroundService.stopService().catch((err) => err);
+  }, []);
 
-  setAccuracy = (value) => this.setState({ highAccuracy: value });
-  setSignificantChange = (value) =>
-    this.setState({ significantChanges: value });
-  setLocationDialog = (value) => this.setState({ showLocationDialog: value });
-  setForceLocation = (value) => this.setState({ forceLocation: value });
-  setForegroundService = (value) => this.setState({ foregroundService: value });
+  return (
+    <View style={styles.mainContainer}>
+      <MapView coords={location?.coords || null} />
 
-  render() {
-    const {
-      forceLocation,
-      highAccuracy,
-      loading,
-      location,
-      showLocationDialog,
-      significantChanges,
-      updatesEnabled,
-      foregroundService,
-    } = this.state;
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+      >
+        <View>
+          <View style={styles.option}>
+            <Text>Enable High Accuracy</Text>
+            <Switch onValueChange={setHighAccuracy} value={highAccuracy} />
+          </View>
 
-    return (
-      <View style={styles.mainContainer}>
-        <MapView coords={location.coords || null} />
-
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={styles.contentContainer}
-        >
-          <View>
+          {Platform.OS === 'ios' && (
             <View style={styles.option}>
-              <Text>Enable High Accuracy</Text>
-              <Switch onValueChange={this.setAccuracy} value={highAccuracy} />
+              <Text>Use Significant Changes</Text>
+              <Switch
+                onValueChange={setSignificantChanges}
+                value={significantChanges}
+              />
             </View>
+          )}
 
-            {Platform.OS === 'ios' && (
+          {Platform.OS === 'android' && (
+            <>
               <View style={styles.option}>
-                <Text>Use Significant Changes</Text>
+                <Text>Show Location Dialog</Text>
                 <Switch
-                  onValueChange={this.setSignificantChange}
-                  value={significantChanges}
+                  onValueChange={setLocationDialog}
+                  value={locationDialog}
                 />
               </View>
-            )}
-
-            {Platform.OS === 'android' && (
-              <>
-                <View style={styles.option}>
-                  <Text>Show Location Dialog</Text>
-                  <Switch
-                    onValueChange={this.setLocationDialog}
-                    value={showLocationDialog}
-                  />
-                </View>
-                <View style={styles.option}>
-                  <Text>Force Location Request</Text>
-                  <Switch
-                    onValueChange={this.setForceLocation}
-                    value={forceLocation}
-                  />
-                </View>
-                <View style={styles.option}>
-                  <Text>Enable Foreground Service</Text>
-                  <Switch
-                    onValueChange={this.setForegroundService}
-                    value={foregroundService}
-                  />
-                </View>
-              </>
-            )}
-          </View>
-          <View style={styles.buttonContainer}>
+              <View style={styles.option}>
+                <Text>Force Location Request</Text>
+                <Switch
+                  onValueChange={setForceLocation}
+                  value={forceLocation}
+                />
+              </View>
+              <View style={styles.option}>
+                <Text>Enable Foreground Service</Text>
+                <Switch
+                  onValueChange={setForegroundService}
+                  value={foregroundService}
+                />
+              </View>
+            </>
+          )}
+        </View>
+        <View style={styles.buttonContainer}>
+          <Button title="Get Location" onPress={getLocation} />
+          <View style={styles.buttons}>
             <Button
-              title="Get Location"
-              onPress={this.getLocation}
-              disabled={loading || updatesEnabled}
+              title="Start Observing"
+              onPress={getLocationUpdates}
+              disabled={observing}
             />
-            <View style={styles.buttons}>
-              <Button
-                title="Start Observing"
-                onPress={this.getLocationUpdates}
-                disabled={updatesEnabled}
-              />
-              <Button
-                title="Stop Observing"
-                onPress={this.removeLocationUpdates}
-                disabled={!updatesEnabled}
-              />
-            </View>
+            <Button
+              title="Stop Observing"
+              onPress={removeLocationUpdates}
+              disabled={!observing}
+            />
           </View>
-          <View style={styles.result}>
-            <Text>Latitude: {location?.coords?.latitude || ''}</Text>
-            <Text>Longitude: {location?.coords?.longitude || ''}</Text>
-            <Text>Heading: {location?.coords?.heading}</Text>
-            <Text>Accuracy: {location?.coords?.accuracy}</Text>
-            <Text>Altitude: {location?.coords?.altitude}</Text>
-            <Text>Speed: {location?.coords?.speed}</Text>
-            <Text>
-              Timestamp:{' '}
-              {location.timestamp
-                ? new Date(location.timestamp).toLocaleString()
-                : ''}
-            </Text>
-          </View>
-        </ScrollView>
-      </View>
-    );
-  }
+        </View>
+        <View style={styles.result}>
+          <Text>Latitude: {location?.coords?.latitude || ''}</Text>
+          <Text>Longitude: {location?.coords?.longitude || ''}</Text>
+          <Text>Heading: {location?.coords?.heading}</Text>
+          <Text>Accuracy: {location?.coords?.accuracy}</Text>
+          <Text>Altitude: {location?.coords?.altitude}</Text>
+          <Text>Altitude Accuracy: {location?.coords?.altitudeAccuracy}</Text>
+          <Text>Speed: {location?.coords?.speed}</Text>
+          <Text>Provider: {location?.provider || ''}</Text>
+          <Text>
+            Timestamp:{' '}
+            {location?.timestamp
+              ? new Date(location.timestamp).toLocaleString()
+              : ''}
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
