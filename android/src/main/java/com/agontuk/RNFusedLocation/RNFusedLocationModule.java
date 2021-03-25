@@ -17,15 +17,20 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
 
+import java.util.Collection;
+import java.util.HashMap;
+
 public class RNFusedLocationModule extends ReactContextBaseJavaModule implements ActivityEventListener {
   public static final String TAG = "RNFusedLocation";
-  private final LocationProvider locationProvider;
+  private int singleLocationProviderKeyCounter = 1;
+  private final HashMap<String, LocationProvider> singleLocationProviders;
+  @Nullable private LocationProvider continuousLocationProvider;
 
   public RNFusedLocationModule(ReactApplicationContext reactContext) {
     super(reactContext);
 
     reactContext.addActivityEventListener(this);
-    this.locationProvider = createLocationProvider();
+    this.singleLocationProviders = new HashMap<>();
 
     Log.i(TAG, TAG + " initialized");
   }
@@ -38,7 +43,19 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
 
   @Override
   public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
-    locationProvider.onActivityResult(requestCode, resultCode);
+    if (continuousLocationProvider != null &&
+      continuousLocationProvider.onActivityResult(requestCode, resultCode)
+    ) {
+      return;
+    }
+
+    Collection<LocationProvider> providers = singleLocationProviders.values();
+
+    for (LocationProvider locationProvider: providers) {
+      if (locationProvider.onActivityResult(requestCode, resultCode)) {
+        return;
+      }
+    }
   }
 
   @Override
@@ -56,16 +73,23 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     }
 
     LocationOptions locationOptions = LocationOptions.fromReadableMap(options);
+    final LocationProvider locationProvider = createLocationProvider();
+
+    final String key = "provider-" + singleLocationProviderKeyCounter;
+    singleLocationProviders.put(key, locationProvider);
+    singleLocationProviderKeyCounter++;
 
     locationProvider.getCurrentLocation(locationOptions, new LocationChangeListener() {
       @Override
       public void onLocationChange(Location location) {
         success.invoke(LocationUtils.locationToMap(location));
+        singleLocationProviders.remove(key);
       }
 
       @Override
       public void onLocationError(LocationError locationError, @Nullable String message) {
         error.invoke(LocationUtils.buildError(locationError, message));
+        singleLocationProviders.remove(key);
       }
     });
   }
@@ -84,7 +108,11 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
 
     LocationOptions locationOptions = LocationOptions.fromReadableMap(options);
 
-    locationProvider.requestLocationUpdates(locationOptions, new LocationChangeListener() {
+    if (continuousLocationProvider == null) {
+      continuousLocationProvider = createLocationProvider();
+    }
+
+    continuousLocationProvider.requestLocationUpdates(locationOptions, new LocationChangeListener() {
       @Override
       public void onLocationChange(Location location) {
         emitEvent("geolocationDidChange", LocationUtils.locationToMap(location));
@@ -99,7 +127,10 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
 
   @ReactMethod
   public void stopObserving() {
-    locationProvider.removeLocationUpdates();
+    if (continuousLocationProvider != null) {
+      continuousLocationProvider.removeLocationUpdates();
+      continuousLocationProvider = null;
+    }
   }
 
   private LocationProvider createLocationProvider() {
