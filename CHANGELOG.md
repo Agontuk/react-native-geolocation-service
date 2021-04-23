@@ -1,5 +1,11 @@
 # Changelog
 
+### 5.3.0-beta.1 (April 23, 2021)
+ - Android: update default build tools & sdk version
+ - Android: add vertical accuracy & provider name in location data if available
+ - Android: rewrite implementation & add support for LocationManager API
+ - Android: fallback to use LocationManager if Google Play Service is not available
+
 ### 5.2.0 (February 2, 2021)
  - Android: fix location request on airplane mode
  - iOS: add ability to configure showsBackgroundLocationIndicator
