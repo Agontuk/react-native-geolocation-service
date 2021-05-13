@@ -137,6 +137,16 @@ public class LocationUtils {
       map.putBoolean("mocked", location.isFromMockProvider());
     }
 
+    Bundle bundle = location.getExtras();
+    if (bundle != null) {
+      WritableMap extras = Arguments.createMap();
+      for (String key: bundle.keySet()) {
+        putIntoMap(extras, key, bundle.get(key));
+      }
+
+      map.putMap("extras", extras);
+    }
+
     return map;
   }
 
