@@ -6,6 +6,10 @@ const Geolocation = {
     throw new Error('Method not supported by browser');
   },
 
+  getCurrentAuthorization: function () {
+    throw new Error('Method not supported by browser');
+  },
+
   requestAuthorization: async function () {
     return Promise.reject('Method not supported by browser');
   },
@@ -18,6 +22,10 @@ const Geolocation = {
     }
 
     navigator.geolocation.getCurrentPosition(success, error, options);
+  },
+
+  watchPermission: function () {
+    throw new Error('Method not supported by browser')
   },
 
   watchPosition: function (success, error, options) {

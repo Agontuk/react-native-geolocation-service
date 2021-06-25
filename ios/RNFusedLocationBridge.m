@@ -4,6 +4,11 @@
 @interface RCT_EXTERN_MODULE(RNFusedLocation, RCTEventEmitter)
 
 RCT_EXTERN_METHOD(
+  getCurrentAuthorization:(RCTPromiseResolveBlock *)resolve
+                   reject:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(
   requestAuthorization:(NSString *)level
                resolve:(RCTPromiseResolveBlock)resolve
                 reject:(RCTPromiseRejectBlock)reject
@@ -14,6 +19,10 @@ RCT_EXTERN_METHOD(
      successCallback:(RCTResponseSenderBlock)successCallback
        errorCallback:(RCTResponseSenderBlock)errorCallback
 )
+
+RCT_EXTERN_METHOD(permissionListenerAdded)
+
+RCT_EXTERN_METHOD(permissionListenerRemoved)
 
 _RCT_EXTERN_REMAP_METHOD(
   startObserving,

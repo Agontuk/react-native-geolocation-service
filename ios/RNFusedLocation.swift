@@ -24,6 +24,7 @@ class RNFusedLocation: RCTEventEmitter {
   private var resolveAuthorizationStatus: RCTPromiseResolveBlock? = nil
   private var successCallback: RCTResponseSenderBlock? = nil
   private var errorCallback: RCTResponseSenderBlock? = nil
+  private var permissionListenerCount: Int = 0
 
   override init() {
     super.init()
@@ -43,6 +44,15 @@ class RNFusedLocation: RCTEventEmitter {
 
     locationManager.delegate = nil;
   }
+  
+  // MARK: Bridge Method
+  @objc(getCurrentAuthorization:reject:)
+  func getCurrentAuthorization(
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) -> Void {
+    resolve(getCurrentAuthorizationStatus())
+  }
 
   // MARK: Bridge Method
   @objc func requestAuthorization(
@@ -56,19 +66,10 @@ class RNFusedLocation: RCTEventEmitter {
       resolve(AuthorizationStatus.disabled.rawValue)
       return
     }
-
-    switch CLLocationManager.authorizationStatus() {
-      case .authorizedWhenInUse, .authorizedAlways:
-        resolve(AuthorizationStatus.granted.rawValue)
-        return
-      case .denied:
-        resolve(AuthorizationStatus.denied.rawValue)
-        return
-      case .restricted:
-        resolve(AuthorizationStatus.restricted.rawValue)
-        return
-      default:
-        break
+    
+    if let currentStatus = getCurrentAuthorizationStatus() {
+      resolve(currentStatus)
+      return
     }
 
     resolveAuthorizationStatus = resolve
@@ -153,6 +154,16 @@ class RNFusedLocation: RCTEventEmitter {
 
     observing = false
   }
+  
+  // MARK: Bridge Method
+  @objc func permissionListenerAdded() -> Void {
+    permissionListenerCount += 1
+  }
+  
+  // MARK: Bridge Method
+  @objc func permissionListenerRemoved() -> Void {
+    permissionListenerCount -= 1
+  }
 
   @objc func timerFired(timer: Timer) -> Void {
     let data = timer.userInfo as! [String: Any]
@@ -231,6 +242,23 @@ class RNFusedLocation: RCTEventEmitter {
 
     return false
   }
+  
+  private func getAuthorizationStatusString(_ authorizationStatus: CLAuthorizationStatus) -> String? {
+    switch authorizationStatus {
+      case .authorizedWhenInUse, .authorizedAlways:
+        return AuthorizationStatus.granted.rawValue
+      case .denied:
+        return AuthorizationStatus.denied.rawValue
+      case .restricted:
+        return AuthorizationStatus.restricted.rawValue
+      default:
+        return nil
+    }
+  }
+  
+  private func getCurrentAuthorizationStatus() -> String? {
+    return getAuthorizationStatusString(CLLocationManager.authorizationStatus())
+  }
 
   private func generateErrorResponse(code: Int, message: String = "") -> [String: Any] {
     var msg: String = message
@@ -268,7 +296,7 @@ extension RNFusedLocation {
   }
 
   override func supportedEvents() -> [String]! {
-    return ["geolocationDidChange", "geolocationError"]
+    return ["geolocationDidChange", "geolocationError", "geolocationPermissionDidChange"]
   }
 
   override func startObserving() -> Void {
@@ -282,22 +310,20 @@ extension RNFusedLocation {
 
 extension RNFusedLocation: CLLocationManagerDelegate {
   func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-    if status == .notDetermined || resolveAuthorizationStatus == nil {
+    if status == .notDetermined {
       return
     }
+    
+    let statusString = getAuthorizationStatusString(status)
 
-    switch status {
-      case .authorizedWhenInUse, .authorizedAlways:
-        resolveAuthorizationStatus?(AuthorizationStatus.granted.rawValue)
-      case .denied:
-        resolveAuthorizationStatus?(AuthorizationStatus.denied.rawValue)
-      case .restricted:
-        resolveAuthorizationStatus?(AuthorizationStatus.restricted.rawValue)
-      default:
-        break
+    if let resolve = resolveAuthorizationStatus {
+      resolve(statusString)
+      resolveAuthorizationStatus = nil
     }
-
-    resolveAuthorizationStatus = nil
+    
+    if (permissionListenerCount > 0) {
+      sendEvent(withName: "geolocationPermissionDidChange", body: statusString)
+    }
   }
 
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {

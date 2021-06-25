@@ -64,6 +64,16 @@ When promise resolves, returns the status of the authorization.
 - `denied` - Permission denied
 - `restricted` - Permission restricted
 
+#### `async getCurrentAuthorization() (iOS only)`
+Get the current location permission status for the app without prompting the user for it.
+Possible return values are the same as for `requestAuthorization` and `null` can also be returned if no specific permission has been granted.
+
+#### `watchPermission(changedCallback) (iOS Only)`
+
+Subscribe to changes to the location permission. These can happen if the user changes them in the settings app while the app is running. `changedCallback` will be called with the authorization result (return values of `requestAuthorization`).
+
+**Returns**: A function to unsubscribe (remove the listener). If called `changedCallback` will stop receiving permission updates.
+
 #### `getCurrentPosition(successCallback, ?errorCallback, ?options)`
  - **successCallback**: Invoked with latest location info.
  - **errorCallback**: Invoked whenever an error is encountered.

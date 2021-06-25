@@ -72,9 +72,13 @@ declare module 'react-native-geolocation-service' {
     provider?: 'fused' | 'gps' | 'network' | 'passive';
   }
 
+  type PermissionChangedCallback = (permission: AuthorizationResult) => void
+
   type SuccessCallback = (position: GeoPosition) => void
 
   type ErrorCallback = (error: GeoError) => void
+
+  export function getCurrentAuthorization(): Promise<AuthorizationResult | null>
 
   export function requestAuthorization(
     authorizationLevel: AuthorizationLevel
@@ -85,6 +89,10 @@ declare module 'react-native-geolocation-service' {
     errorCallback?: ErrorCallback,
     options?: GeoOptions
   ): void
+
+  export function watchPermission(
+    changedCallback: PermissionChangedCallback
+  ): () => void
 
   export function watchPosition(
     successCallback: SuccessCallback,
