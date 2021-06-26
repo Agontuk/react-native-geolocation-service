@@ -25,6 +25,7 @@ export default function App() {
   const [significantChanges, setSignificantChanges] = useState(false);
   const [observing, setObserving] = useState(false);
   const [foregroundService, setForegroundService] = useState(false);
+  const [useLocationManager, setUseLocationManager] = useState(false);
   const [location, setLocation] = useState(null);
 
   const watchId = useRef(null);
@@ -133,6 +134,7 @@ export default function App() {
         maximumAge: 10000,
         distanceFilter: 0,
         forceRequestLocation: forceLocation,
+        forceLocationManager: useLocationManager,
         showLocationDialog: locationDialog,
       },
     );
@@ -170,6 +172,7 @@ export default function App() {
         interval: 5000,
         fastestInterval: 2000,
         forceRequestLocation: forceLocation,
+        forceLocationManager: useLocationManager,
         showLocationDialog: locationDialog,
         useSignificantChanges: significantChanges,
       },
@@ -246,6 +249,13 @@ export default function App() {
                 <Switch
                   onValueChange={setForceLocation}
                   value={forceLocation}
+                />
+              </View>
+              <View style={styles.option}>
+                <Text>Use Location Manager</Text>
+                <Switch
+                  onValueChange={setUseLocationManager}
+                  value={useLocationManager}
                 />
               </View>
               <View style={styles.option}>

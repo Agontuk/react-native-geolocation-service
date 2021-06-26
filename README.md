@@ -75,9 +75,10 @@ When promise resolves, returns the status of the authorization.
     | maximumAge | `ms` | `INFINITY` | How long previous location will be cached |
     | accuracy | `object` | `--` | {<br/>&nbsp;&nbsp;&nbsp;android: [Link](docs/accuracy.md#android),<br/>&nbsp;&nbsp;&nbsp;ios: [Link](docs/accuracy.md#ios)<br/>}<br /><br /> If not provided or provided with invalid value, falls back to use `enableHighAccuracy` |
     | enableHighAccuracy | `bool` | `false` | Use high accuracy mode
-    | distanceFilter | `m` | `0` | Minimum displacement in meters
+    | distanceFilter | `m` | `100` | Minimum displacement in meters
     | showLocationDialog | `bool` | `true` | Whether to ask to enable location in Android (android only)
     | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog (android only)
+    | forceLocationManager | `bool` | `false` | If set to `true`, will use android's default LocationManager API (android only)
 
 #### `watchPosition(successCallback, ?errorCallback, ?options)`
  - **successCallback**: Invoked with latest location info.
@@ -93,6 +94,7 @@ When promise resolves, returns the status of the authorization.
     | fastestInterval | `ms` | `5000` | Fastest rate at which your application will receive location updates, which might be faster than `interval` in some situations (for example, if other applications are triggering location updates) (android only)
     | showLocationDialog | `bool` | `true` | whether to ask to enable location in Android (android only)
     | forceRequestLocation | `bool` | `false` | Force request location even after denying improve accuracy dialog (android only)
+    | forceLocationManager | `bool` | `false` | If set to `true`, will use android's default LocationManager API (android only)
     | useSignificantChanges | `bool` | false | Uses the battery-efficient native significant changes APIs to return locations. Locations will only be returned when the device detects a significant distance has been breached (iOS only)
     | showsBackgroundLocationIndicator | `bool` | false | This setting enables a blue bar or a blue pill in the status bar on iOS. When the app moves to the background, the system uses this property to determine whether to change the status bar appearance to indicate that location services are in use. Users can tap the indicator to return to your app. (iOS only)
 
