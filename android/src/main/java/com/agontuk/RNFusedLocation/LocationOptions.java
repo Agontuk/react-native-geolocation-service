@@ -18,6 +18,7 @@ public class LocationOptions {
   private final double maximumAge;
   private final boolean showLocationDialog;
   private final boolean forceRequestLocation;
+  private final boolean forceLocationManager;
 
   private LocationOptions(
     LocationAccuracy accuracy,
@@ -27,7 +28,8 @@ public class LocationOptions {
     long timeout,
     double maximumAge,
     boolean showLocationDialog,
-    boolean forceRequestLocation
+    boolean forceRequestLocation,
+    boolean forceLocationManager
   ) {
     this.accuracy = accuracy;
     this.interval = interval;
@@ -37,6 +39,7 @@ public class LocationOptions {
     this.maximumAge = maximumAge;
     this.showLocationDialog = showLocationDialog;
     this.forceRequestLocation = forceRequestLocation;
+    this.forceLocationManager = forceLocationManager;
   }
 
   public static LocationOptions fromReadableMap(ReadableMap map) {
@@ -60,7 +63,8 @@ public class LocationOptions {
       !map.hasKey("showLocationDialog") || map.getBoolean("showLocationDialog");
     boolean forceRequestLocation =
       map.hasKey("forceRequestLocation") && map.getBoolean("forceRequestLocation");
-
+    boolean forceLocationManager =
+      map.hasKey("forceLocationManager") && map.getBoolean("forceLocationManager");
 
     return new LocationOptions(
       accuracy,
@@ -70,7 +74,8 @@ public class LocationOptions {
       timeout,
       maximumAge,
       showLocationDialog,
-      forceRequestLocation
+      forceRequestLocation,
+      forceLocationManager
     );
   }
 
@@ -104,6 +109,10 @@ public class LocationOptions {
 
   public boolean isForceRequestLocation() {
     return forceRequestLocation;
+  }
+
+  public boolean isForceLocationManager() {
+    return forceLocationManager;
   }
 
   /**

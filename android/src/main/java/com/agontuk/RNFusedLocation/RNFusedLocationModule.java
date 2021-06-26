@@ -73,7 +73,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     }
 
     LocationOptions locationOptions = LocationOptions.fromReadableMap(options);
-    final LocationProvider locationProvider = createLocationProvider();
+    final LocationProvider locationProvider = createLocationProvider(locationOptions.isForceLocationManager());
 
     final String key = "provider-" + singleLocationProviderKeyCounter;
     singleLocationProviders.put(key, locationProvider);
@@ -109,7 +109,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     LocationOptions locationOptions = LocationOptions.fromReadableMap(options);
 
     if (continuousLocationProvider == null) {
-      continuousLocationProvider = createLocationProvider();
+      continuousLocationProvider = createLocationProvider(locationOptions.isForceLocationManager());
     }
 
     continuousLocationProvider.requestLocationUpdates(locationOptions, new LocationChangeListener() {
@@ -133,14 +133,15 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     }
   }
 
-  private LocationProvider createLocationProvider() {
+  private LocationProvider createLocationProvider(boolean forceLocationManager) {
     ReactApplicationContext context = getContext();
+    boolean playServicesAvailable = LocationUtils.isGooglePlayServicesAvailable(context);
 
-    if (LocationUtils.isGooglePlayServicesAvailable(context)) {
-      return new FusedLocationProvider(context);
+    if (forceLocationManager || !playServicesAvailable) {
+      return new LocationManagerProvider(context);
     }
 
-    return new LocationManagerProvider(context);
+    return new FusedLocationProvider(context);
   }
 
   private void emitEvent(String eventName, WritableMap data) {
