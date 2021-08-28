@@ -1,5 +1,8 @@
 # Changelog
 
+### 5.3.0-beta.2 (August 28, 2021)
+ - Android: expose option to use LocationManager API
+
 ### 5.3.0-beta.1 (April 23, 2021)
  - Android: update default build tools & sdk version
  - Android: add vertical accuracy & provider name in location data if available
