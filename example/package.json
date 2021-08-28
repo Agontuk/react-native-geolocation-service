@@ -12,7 +12,7 @@
   "dependencies": {
     "@voximplant/react-native-foreground-service": "^2.0.0",
     "react": "16.13.1",
-    "react-native": "0.63.4",
+    "react-native": "0.64.1",
     "react-native-geolocation-service": "../",
     "react-native-maps": "0.27.1"
   },
