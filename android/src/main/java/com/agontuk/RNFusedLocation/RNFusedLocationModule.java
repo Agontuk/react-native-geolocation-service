@@ -133,6 +133,16 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     }
   }
 
+  @ReactMethod
+  public void addListener(String eventName) {
+    // Keep: Required for RN built in Event Emitter Calls.
+  }
+
+  @ReactMethod
+  public void removeListeners(Integer count) {
+    // Keep: Required for RN built in Event Emitter Calls.
+  }
+
   private LocationProvider createLocationProvider(boolean forceLocationManager) {
     ReactApplicationContext context = getContext();
     boolean playServicesAvailable = LocationUtils.isGooglePlayServicesAvailable(context);
