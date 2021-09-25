@@ -1,5 +1,8 @@
 # Changelog
 
+### 5.3.0-beta.3 (September 25, 2021)
+ - Android: fix NativeEventEmitter warnings in RN 0.65
+
 ### 5.3.0-beta.2 (August 28, 2021)
  - Android: expose option to use LocationManager API
 
