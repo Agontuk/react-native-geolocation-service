@@ -17,7 +17,7 @@ enum AuthorizationStatus: String {
 class RNFusedLocation: RCTEventEmitter {
   private let locationManager: CLLocationManager = CLLocationManager()
   private var hasListeners: Bool = false
-  private var lastLocation: [String: Any] = [:]
+  private var lastLocation: CLLocation? = nil
   private var observing: Bool = false
   private var timeoutTimer: Timer? = nil
   private var useSignificantChanges: Bool = false
@@ -88,14 +88,12 @@ class RNFusedLocation: RCTEventEmitter {
   ) -> Void {
     let locationOptions = LocationOptions(options)
 
-    if !lastLocation.isEmpty {
-      let elapsedTime = (Date().timeIntervalSince1970 * 1000) - (lastLocation["timestamp"] as! Double)
-
-        if elapsedTime < locationOptions.maximumAge {
-        // Return cached location
-        successCallback([lastLocation])
-        return
-      }
+    if isLocationFresh(lastLocation, locationOptions.maximumAge) {
+      #if DEBUG
+        NSLog("RNLocation: returning cached location")
+      #endif
+      successCallback([locationToDict(lastLocation!)])
+      return
     }
 
     let locManager = CLLocationManager()
@@ -259,18 +257,7 @@ extension RNFusedLocation: CLLocationManagerDelegate {
 
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
     guard let location: CLLocation = locations.last else { return }
-    let locationData: [String: Any] = [
-      "coords": [
-        "latitude": location.coordinate.latitude,
-        "longitude": location.coordinate.longitude,
-        "altitude": location.altitude,
-        "accuracy": location.horizontalAccuracy,
-        "altitudeAccuracy": location.verticalAccuracy,
-        "heading": location.course,
-        "speed": location.speed
-      ],
-      "timestamp": location.timestamp.timeIntervalSince1970 * 1000 // ms
-    ]
+    let locationData = locationToDict(location)
 
     if manager.isEqual(locationManager) && hasListeners && observing {
       sendEvent(withName: "geolocationDidChange", body: locationData)
@@ -279,7 +266,7 @@ extension RNFusedLocation: CLLocationManagerDelegate {
 
     guard successCallback != nil else { return }
 
-    lastLocation = locationData
+    lastLocation = location
     successCallback!([locationData])
 
     // Cleanup
@@ -330,4 +317,33 @@ extension RNFusedLocation: CLLocationManagerDelegate {
     successCallback = nil
     errorCallback = nil
   }
+}
+
+func isLocationFresh(_ location: CLLocation?, _ maxAge: Double) -> Bool {
+  if location == nil {
+    return false
+  }
+
+  let elapsedTime = (Date().timeIntervalSince1970 - location!.timestamp.timeIntervalSince1970) * 1000
+
+  #if DEBUG
+    NSLog("RNLocation: elapsedTime=\(elapsedTime)ms, maxAge=\(maxAge)ms")
+  #endif
+
+  return elapsedTime < maxAge
+}
+
+func locationToDict(_ location: CLLocation) -> [String: Any] {
+  return [
+    "coords": [
+      "latitude": location.coordinate.latitude,
+      "longitude": location.coordinate.longitude,
+      "altitude": location.altitude,
+      "accuracy": location.horizontalAccuracy,
+      "altitudeAccuracy": location.verticalAccuracy,
+      "heading": location.course,
+      "speed": location.speed
+    ],
+    "timestamp": location.timestamp.timeIntervalSince1970 * 1000 // ms
+  ]
 }
