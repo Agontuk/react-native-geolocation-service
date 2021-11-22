@@ -86,14 +86,12 @@ class RNFusedLocation: RCTEventEmitter {
     successCallback: @escaping RCTResponseSenderBlock,
     errorCallback: @escaping RCTResponseSenderBlock
   ) -> Void {
-    let distanceFilter = options["distanceFilter"] as? Double ?? kCLDistanceFilterNone
-    let maximumAge = options["maximumAge"] as? Double ?? Double.infinity
-    let timeout = options["timeout"] as? Double ?? Double.infinity
+    let locationOptions = LocationOptions(options)
 
     if !lastLocation.isEmpty {
       let elapsedTime = (Date().timeIntervalSince1970 * 1000) - (lastLocation["timestamp"] as! Double)
 
-      if elapsedTime < maximumAge {
+        if elapsedTime < locationOptions.maximumAge {
         // Return cached location
         successCallback([lastLocation])
         return
@@ -102,16 +100,16 @@ class RNFusedLocation: RCTEventEmitter {
 
     let locManager = CLLocationManager()
     locManager.delegate = self
-    locManager.desiredAccuracy = getAccuracy(options)
-    locManager.distanceFilter = distanceFilter
+    locManager.desiredAccuracy = locationOptions.accuracy
+    locManager.distanceFilter = locationOptions.distanceFilter
     locManager.startUpdatingLocation()
 
     self.successCallback = successCallback
     self.errorCallback = errorCallback
 
-    if timeout > 0 && timeout != Double.infinity {
+    if locationOptions.timeout > 0 && locationOptions.timeout != Double.infinity {
       timeoutTimer = Timer.scheduledTimer(
-        timeInterval: timeout / 1000.0, // timeInterval is in seconds
+        timeInterval: locationOptions.timeout / 1000.0, // timeInterval is in seconds
         target: self,
         selector: #selector(timerFired),
         userInfo: [
@@ -125,23 +123,21 @@ class RNFusedLocation: RCTEventEmitter {
 
   // MARK: Bridge Method
   @objc func startLocationUpdate(_ options: [String: Any]) -> Void {
-    let distanceFilter = options["distanceFilter"] as? Double ?? DEFAULT_DISTANCE_FILTER
-    let significantChanges = options["useSignificantChanges"] as? Bool ?? false
-    let showsBackgroundLocationIndicator = options["showsBackgroundLocationIndicator"] as? Bool ?? false
+    let locationOptions = LocationOptions(options)
 
-    locationManager.desiredAccuracy = getAccuracy(options)
-    locationManager.distanceFilter = distanceFilter
-    locationManager.allowsBackgroundLocationUpdates = shouldAllowBackgroundUpdate()
-    locationManager.pausesLocationUpdatesAutomatically = false
+    locationManager.desiredAccuracy = locationOptions.accuracy
+    locationManager.distanceFilter = locationOptions.distanceFilter
+    locationManager.allowsBackgroundLocationUpdates = locationOptions.backgroundUpdates
+    locationManager.pausesLocationUpdatesAutomatically = locationOptions.pauseUpdatesAutomatically
     if #available(iOS 11.0, *) {
-      locationManager.showsBackgroundLocationIndicator = showsBackgroundLocationIndicator
+        locationManager.showsBackgroundLocationIndicator = locationOptions.backgroundIndicator
     }
 
-    significantChanges
+    locationOptions.significantChanges
       ? locationManager.startMonitoringSignificantLocationChanges()
       : locationManager.startUpdatingLocation()
 
-    useSignificantChanges = significantChanges
+    useSignificantChanges = locationOptions.significantChanges
     observing = true
   }
 
@@ -191,45 +187,6 @@ class RNFusedLocation: RCTEventEmitter {
           RCTMakeAndLogError("Invalid authorization level provided", nil, nil)
       }
     #endif
-  }
-
-  private func getAccuracy(_ options: [String: Any]) -> Double {
-    let accuracyDict = options["accuracy"] as? [String: String] ?? [:]
-    let accuracyLevel = accuracyDict["ios"] ?? ""
-    let highAccuracy = options["enableHighAccuracy"] as? Bool ?? false
-
-    switch accuracyLevel {
-      case "bestForNavigation":
-        return kCLLocationAccuracyBestForNavigation
-      case "best":
-        return kCLLocationAccuracyBest
-      case "nearestTenMeters":
-        return kCLLocationAccuracyNearestTenMeters
-      case "hundredMeters":
-        return kCLLocationAccuracyHundredMeters
-      case "kilometer":
-        return kCLLocationAccuracyKilometer
-      case "threeKilometers":
-        return kCLLocationAccuracyThreeKilometers
-      case "reduced":
-        if #available(iOS 14.0, *) {
-            return kCLLocationAccuracyReduced
-        } else {
-            return kCLLocationAccuracyThreeKilometers
-        }
-      default:
-        return highAccuracy ? kCLLocationAccuracyBest : kCLLocationAccuracyHundredMeters
-    }
-  }
-
-  private func shouldAllowBackgroundUpdate() -> Bool {
-    let info = Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String] ?? []
-
-    if info.contains("location") {
-      return true
-    }
-
-    return false
   }
 
   private func generateErrorResponse(code: Int, message: String = "") -> [String: Any] {

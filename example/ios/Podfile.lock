@@ -269,7 +269,7 @@ PODS:
     - React-jsi (= 0.65.1)
     - React-perflogger (= 0.65.1)
   - React-jsinspector (0.65.1)
-  - react-native-geolocation-service (5.3.0-beta.2):
+  - react-native-geolocation-service (5.3.0-beta.3):
     - React
   - react-native-maps (0.28.0):
     - React-Core
@@ -506,7 +506,7 @@ SPEC CHECKSUMS:
   React-jsi: 12913c841713a15f64eabf5c9ad98592c0ec5940
   React-jsiexecutor: 43f2542aed3c26e42175b339f8d37fe3dd683765
   React-jsinspector: 41e58e5b8e3e0bf061fdf725b03f2144014a8fb0
-  react-native-geolocation-service: 94c7d2ffdbbf4dd431241e0c8e37d491ebd41430
+  react-native-geolocation-service: 32e50a2e4e4518b51b829fdfe137562a672d95d2
   react-native-maps: 2d405b4e8cee0282e4c02bac434d81450dfea877
   React-perflogger: fd28ee1f2b5b150b00043f0301d96bd417fdc339
   React-RCTActionSheet: 7f3fa0855c346aa5d7c60f9ced16e067db6d29fa
@@ -525,4 +525,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 552317fbeaf8b5d3ace21a59a91df26ad42e7a24
 
-COCOAPODS: 1.10.1
+COCOAPODS: 1.11.2
