@@ -1,47 +1,14 @@
 import Foundation
 import CoreLocation
 
-let DEFAULT_DISTANCE_FILTER: CLLocationDistance = 100
-
-enum LocationError: Int {
-  case PERMISSION_DENIED = 1
-  case POSITION_UNAVAILABLE
-  case TIMEOUT
-}
-
-enum AuthorizationStatus: String {
-  case disabled, granted, denied, restricted
-}
-
 @objc(RNFusedLocation)
 class RNFusedLocation: RCTEventEmitter {
-  private let locationManager: CLLocationManager = CLLocationManager()
+  private let locationProvider: LocationProvider
   private var hasListeners: Bool = false
-  private var lastLocation: CLLocation? = nil
-  private var observing: Bool = false
-  private var timeoutTimer: Timer? = nil
-  private var useSignificantChanges: Bool = false
-  private var resolveAuthorizationStatus: RCTPromiseResolveBlock? = nil
-  private var successCallback: RCTResponseSenderBlock? = nil
-  private var errorCallback: RCTResponseSenderBlock? = nil
 
   override init() {
+    locationProvider = LocationProvider()
     super.init()
-    locationManager.delegate = self
-  }
-
-  deinit {
-    if observing {
-      useSignificantChanges
-        ? locationManager.stopMonitoringSignificantLocationChanges()
-        : locationManager.stopUpdatingLocation()
-
-      observing = false
-    }
-
-    timeoutTimer?.invalidate()
-
-    locationManager.delegate = nil;
   }
 
   // MARK: Bridge Method
@@ -50,34 +17,24 @@ class RNFusedLocation: RCTEventEmitter {
     resolve: @escaping RCTPromiseResolveBlock,
     reject: @escaping RCTPromiseRejectBlock
   ) -> Void {
-    checkPlistKeys(authorizationLevel: level)
-
     if !CLLocationManager.locationServicesEnabled() {
-      resolve(AuthorizationStatus.disabled.rawValue)
-      return
+      resolve(PermissionStatus.disabled.rawValue)
     }
 
-    switch CLLocationManager.authorizationStatus() {
-      case .authorizedWhenInUse, .authorizedAlways:
-        resolve(AuthorizationStatus.granted.rawValue)
-        return
-      case .denied:
-        resolve(AuthorizationStatus.denied.rawValue)
-        return
-      case .restricted:
-        resolve(AuthorizationStatus.restricted.rawValue)
-        return
-      default:
-        break
-    }
+    locationProvider.requestPermission(level, handler: { (status) -> Void in
+      var permissionStatus = PermissionStatus.denied
 
-    resolveAuthorizationStatus = resolve
+      switch status {
+        case .authorizedAlways, .authorizedWhenInUse:
+          permissionStatus = PermissionStatus.granted
+        case .restricted:
+          permissionStatus = PermissionStatus.restricted
+        default:
+          break
+      }
 
-    if level == "whenInUse" {
-      locationManager.requestWhenInUseAuthorization()
-    } else if level == "always" {
-      locationManager.requestAlwaysAuthorization()
-    }
+      resolve(permissionStatus.rawValue)
+    })
   }
 
   // MARK: Bridge Method
@@ -88,125 +45,39 @@ class RNFusedLocation: RCTEventEmitter {
   ) -> Void {
     let locationOptions = LocationOptions(options)
 
-    if isLocationFresh(lastLocation, locationOptions.maximumAge) {
-      #if DEBUG
-        NSLog("RNLocation: returning cached location")
-      #endif
-      successCallback([locationToDict(lastLocation!)])
-      return
-    }
-
-    let locManager = CLLocationManager()
-    locManager.delegate = self
-    locManager.desiredAccuracy = locationOptions.accuracy
-    locManager.distanceFilter = locationOptions.distanceFilter
-    locManager.startUpdatingLocation()
-
-    self.successCallback = successCallback
-    self.errorCallback = errorCallback
-
-    if locationOptions.timeout > 0 && locationOptions.timeout != Double.infinity {
-      timeoutTimer = Timer.scheduledTimer(
-        timeInterval: locationOptions.timeout / 1000.0, // timeInterval is in seconds
-        target: self,
-        selector: #selector(timerFired),
-        userInfo: [
-          "errorCallback": errorCallback,
-          "manager": locManager
-        ],
-        repeats: false
-      )
-    }
+    locationProvider.getCurrentLocation(
+      locationOptions,
+      successHandler: { (location) -> Void in
+        successCallback([locationToDict(location)])
+      },
+      errorHandler: { (err, message) -> Void in
+        errorCallback([buildError(err, message ?? "")])
+      }
+    )
   }
 
   // MARK: Bridge Method
   @objc func startLocationUpdate(_ options: [String: Any]) -> Void {
     let locationOptions = LocationOptions(options)
 
-    locationManager.desiredAccuracy = locationOptions.accuracy
-    locationManager.distanceFilter = locationOptions.distanceFilter
-    locationManager.allowsBackgroundLocationUpdates = locationOptions.backgroundUpdates
-    locationManager.pausesLocationUpdatesAutomatically = locationOptions.pauseUpdatesAutomatically
-    if #available(iOS 11.0, *) {
-        locationManager.showsBackgroundLocationIndicator = locationOptions.backgroundIndicator
-    }
-
-    locationOptions.significantChanges
-      ? locationManager.startMonitoringSignificantLocationChanges()
-      : locationManager.startUpdatingLocation()
-
-    useSignificantChanges = locationOptions.significantChanges
-    observing = true
+    locationProvider.requestLocationUpdates(
+      locationOptions,
+      successHandler: { [self] (location) -> Void in
+        if (hasListeners) {
+          sendEvent(withName: "geolocationDidChange", body: locationToDict(location))
+        }
+      },
+      errorHandler: { [self] (err, message) -> Void in
+        if (hasListeners) {
+          sendEvent(withName: "geolocationError", body: buildError(err, message ?? ""))
+        }
+      }
+    )
   }
 
   // MARK: Bridge Method
   @objc func stopLocationUpdate() -> Void {
-    useSignificantChanges
-      ? locationManager.stopMonitoringSignificantLocationChanges()
-      : locationManager.stopUpdatingLocation()
-
-    observing = false
-  }
-
-  @objc func timerFired(timer: Timer) -> Void {
-    let data = timer.userInfo as! [String: Any]
-    let errorCallback = data["errorCallback"] as! RCTResponseSenderBlock
-    let manager = data["manager"] as! CLLocationManager
-
-    manager.stopUpdatingLocation()
-    manager.delegate = nil
-    errorCallback([generateErrorResponse(code: LocationError.TIMEOUT.rawValue)])
-  }
-
-  private func checkPlistKeys(authorizationLevel: String) -> Void {
-    #if DEBUG
-      let key1 = Bundle.main.object(forInfoDictionaryKey: "NSLocationWhenInUseUsageDescription")
-      let key2 = Bundle.main.object(forInfoDictionaryKey: "NSLocationAlwaysUsageDescription")
-      let key3 = Bundle.main.object(forInfoDictionaryKey: "NSLocationAlwaysAndWhenInUseUsageDescription")
-
-      switch authorizationLevel {
-        case "whenInUse":
-          if key1 == nil {
-            RCTMakeAndLogError(
-              "NSLocationWhenInUseUsageDescription key must be present in Info.plist",
-              nil,
-              nil
-            )
-          }
-        case "always":
-          if key1 == nil || key2 == nil || key3 == nil {
-            RCTMakeAndLogError(
-              "NSLocationWhenInUseUsageDescription, NSLocationAlwaysUsageDescription & NSLocationAlwaysAndWhenInUseUsageDescription key must be present in Info.plist",
-              nil,
-              nil
-            )
-          }
-        default:
-          RCTMakeAndLogError("Invalid authorization level provided", nil, nil)
-      }
-    #endif
-  }
-
-  private func generateErrorResponse(code: Int, message: String = "") -> [String: Any] {
-    var msg: String = message
-
-    if msg.isEmpty {
-      switch code {
-        case LocationError.PERMISSION_DENIED.rawValue:
-          msg = "Location permission denied"
-        case LocationError.POSITION_UNAVAILABLE.rawValue:
-          msg = "Unable to retrieve location due to a network failure"
-        case LocationError.TIMEOUT.rawValue:
-          msg = "Location request timed out"
-        default:
-          break
-      }
-    }
-
-    return [
-      "code": code,
-      "message": msg
-    ]
+    locationProvider.removeLocationUpdates()
   }
 }
 
@@ -233,117 +104,4 @@ extension RNFusedLocation {
   override func stopObserving() -> Void {
     hasListeners = false
   }
-}
-
-extension RNFusedLocation: CLLocationManagerDelegate {
-  func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-    if status == .notDetermined || resolveAuthorizationStatus == nil {
-      return
-    }
-
-    switch status {
-      case .authorizedWhenInUse, .authorizedAlways:
-        resolveAuthorizationStatus?(AuthorizationStatus.granted.rawValue)
-      case .denied:
-        resolveAuthorizationStatus?(AuthorizationStatus.denied.rawValue)
-      case .restricted:
-        resolveAuthorizationStatus?(AuthorizationStatus.restricted.rawValue)
-      default:
-        break
-    }
-
-    resolveAuthorizationStatus = nil
-  }
-
-  func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-    guard let location: CLLocation = locations.last else { return }
-    let locationData = locationToDict(location)
-
-    if manager.isEqual(locationManager) && hasListeners && observing {
-      sendEvent(withName: "geolocationDidChange", body: locationData)
-      return
-    }
-
-    guard successCallback != nil else { return }
-
-    lastLocation = location
-    successCallback!([locationData])
-
-    // Cleanup
-    manager.stopUpdatingLocation()
-    manager.delegate = nil
-    timeoutTimer?.invalidate()
-    successCallback = nil
-    errorCallback = nil
-  }
-
-  func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-    var errorData: [String: Any] = generateErrorResponse(
-      code: LocationError.POSITION_UNAVAILABLE.rawValue,
-      message: "Unable to retrieve location"
-    )
-
-    if let clErr = error as? CLError {
-      switch clErr.code {
-        case CLError.denied:
-          if !CLLocationManager.locationServicesEnabled() {
-            errorData = generateErrorResponse(
-              code: LocationError.POSITION_UNAVAILABLE.rawValue,
-              message: "Location service is turned off"
-            )
-          } else {
-            errorData = generateErrorResponse(code: LocationError.PERMISSION_DENIED.rawValue)
-          }
-        case CLError.network:
-          errorData = generateErrorResponse(code: LocationError.POSITION_UNAVAILABLE.rawValue)
-        default:
-          break
-      }
-    }
-
-    if manager.isEqual(locationManager) && hasListeners && observing {
-      sendEvent(withName: "geolocationError", body: errorData)
-      return
-    }
-
-    guard errorCallback != nil else { return }
-
-    errorCallback!([errorData])
-
-    // Cleanup
-    manager.stopUpdatingLocation()
-    manager.delegate = nil
-    timeoutTimer?.invalidate()
-    successCallback = nil
-    errorCallback = nil
-  }
-}
-
-func isLocationFresh(_ location: CLLocation?, _ maxAge: Double) -> Bool {
-  if location == nil {
-    return false
-  }
-
-  let elapsedTime = (Date().timeIntervalSince1970 - location!.timestamp.timeIntervalSince1970) * 1000
-
-  #if DEBUG
-    NSLog("RNLocation: elapsedTime=\(elapsedTime)ms, maxAge=\(maxAge)ms")
-  #endif
-
-  return elapsedTime < maxAge
-}
-
-func locationToDict(_ location: CLLocation) -> [String: Any] {
-  return [
-    "coords": [
-      "latitude": location.coordinate.latitude,
-      "longitude": location.coordinate.longitude,
-      "altitude": location.altitude,
-      "accuracy": location.horizontalAccuracy,
-      "altitudeAccuracy": location.verticalAccuracy,
-      "heading": location.course,
-      "speed": location.speed
-    ],
-    "timestamp": location.timestamp.timeIntervalSince1970 * 1000 // ms
-  ]
 }

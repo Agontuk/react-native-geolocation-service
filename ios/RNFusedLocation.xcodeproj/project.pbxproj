@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		79836A1327501599000606CD /* LocationProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79836A1227501599000606CD /* LocationProvider.swift */; };
 		799F9080274C16110046FAAD /* LocationOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 799F907F274C16110046FAAD /* LocationOptions.swift */; };
+		79B09BC42750A6AC00D492DC /* LocationUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79B09BC32750A6AC00D492DC /* LocationUtils.swift */; };
 		E57CAFD2244DF5B700C61C8A /* RNFusedLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E57CAFD1244DF5B700C61C8A /* RNFusedLocation.swift */; };
 		E57CAFD4244DF5D900C61C8A /* RNFusedLocationBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = E57CAFD3244DF5D900C61C8A /* RNFusedLocationBridge.m */; };
 /* End PBXBuildFile section */
@@ -26,7 +28,9 @@
 
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libRNFusedLocation.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNFusedLocation.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		79836A1227501599000606CD /* LocationProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationProvider.swift; sourceTree = "<group>"; };
 		799F907F274C16110046FAAD /* LocationOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationOptions.swift; sourceTree = "<group>"; };
+		79B09BC32750A6AC00D492DC /* LocationUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationUtils.swift; sourceTree = "<group>"; };
 		E57CAFD0244DF5B600C61C8A /* RNFusedLocation-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RNFusedLocation-Bridging-Header.h"; sourceTree = "<group>"; };
 		E57CAFD1244DF5B700C61C8A /* RNFusedLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RNFusedLocation.swift; sourceTree = "<group>"; };
 		E57CAFD3244DF5D900C61C8A /* RNFusedLocationBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNFusedLocationBridge.m; sourceTree = "<group>"; };
@@ -54,6 +58,8 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				79B09BC32750A6AC00D492DC /* LocationUtils.swift */,
+				79836A1227501599000606CD /* LocationProvider.swift */,
 				799F907F274C16110046FAAD /* LocationOptions.swift */,
 				E57CAFD3244DF5D900C61C8A /* RNFusedLocationBridge.m */,
 				E57CAFD1244DF5B700C61C8A /* RNFusedLocation.swift */,
@@ -121,8 +127,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				E57CAFD2244DF5B700C61C8A /* RNFusedLocation.swift in Sources */,
+				79836A1327501599000606CD /* LocationProvider.swift in Sources */,
 				E57CAFD4244DF5D900C61C8A /* RNFusedLocationBridge.m in Sources */,
 				799F9080274C16110046FAAD /* LocationOptions.swift in Sources */,
+				79B09BC42750A6AC00D492DC /* LocationUtils.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
