@@ -3,13 +3,13 @@ import CoreLocation
 
 @objc(RNFusedLocation)
 class RNFusedLocation: RCTEventEmitter {
-  private let locationProvider: LocationProvider
+  private var continuousLocationProvider: LocationProvider? = nil
   private var permissionProvider: LocationProvider? = nil
   private var hasListeners: Bool = false
 
-  override init() {
-    locationProvider = LocationProvider()
-    super.init()
+  deinit {
+    continuousLocationProvider = nil
+    permissionProvider = nil
   }
 
   // MARK: Bridge Method
@@ -67,7 +67,11 @@ class RNFusedLocation: RCTEventEmitter {
   @objc func startLocationUpdate(_ options: [String: Any]) -> Void {
     let locationOptions = LocationOptions(options)
 
-    locationProvider.requestLocationUpdates(
+    if continuousLocationProvider == nil {
+      continuousLocationProvider = LocationProvider()
+    }
+
+    continuousLocationProvider!.requestLocationUpdates(
       locationOptions,
       successHandler: { [self] (location) -> Void in
         if (hasListeners) {
@@ -84,7 +88,10 @@ class RNFusedLocation: RCTEventEmitter {
 
   // MARK: Bridge Method
   @objc func stopLocationUpdate() -> Void {
-    locationProvider.removeLocationUpdates()
+    if continuousLocationProvider != nil {
+      continuousLocationProvider!.removeLocationUpdates()
+      continuousLocationProvider = nil
+    }
   }
 }
 
