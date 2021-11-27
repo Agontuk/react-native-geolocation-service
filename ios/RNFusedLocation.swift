@@ -4,6 +4,7 @@ import CoreLocation
 @objc(RNFusedLocation)
 class RNFusedLocation: RCTEventEmitter {
   private let locationProvider: LocationProvider
+  private var permissionProvider: LocationProvider? = nil
   private var hasListeners: Bool = false
 
   override init() {
@@ -22,7 +23,11 @@ class RNFusedLocation: RCTEventEmitter {
       return
     }
 
-    locationProvider.requestPermission(level, handler: { (status) -> Void in
+    if permissionProvider == nil {
+      permissionProvider = LocationProvider()
+    }
+
+    permissionProvider!.requestPermission(level, handler: { [self] (status) -> Void in
       var permissionStatus = PermissionStatus.denied
 
       switch status {
@@ -35,6 +40,7 @@ class RNFusedLocation: RCTEventEmitter {
       }
 
       resolve(permissionStatus.rawValue)
+      permissionProvider = nil
     })
   }
 
