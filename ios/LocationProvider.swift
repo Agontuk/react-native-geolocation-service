@@ -181,5 +181,10 @@ extension LocationProvider: CLLocationManagerDelegate {
     }
 
     onLocationError?(err, message)
+
+    if (isSingleUpdate) {
+      timeoutTimer?.invalidate()
+      locationManager.stopUpdatingLocation()
+    }
   }
 }

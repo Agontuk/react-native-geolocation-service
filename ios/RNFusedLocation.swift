@@ -19,6 +19,7 @@ class RNFusedLocation: RCTEventEmitter {
   ) -> Void {
     if !CLLocationManager.locationServicesEnabled() {
       resolve(PermissionStatus.disabled.rawValue)
+      return
     }
 
     locationProvider.requestPermission(level, handler: { (status) -> Void in
