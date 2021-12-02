@@ -26,7 +26,7 @@ public class LocationUtils {
    */
   public static long getLocationAge(Location location) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-      return (SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos()) / 1000000;
+      return (SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos()) / 1000;
     }
 
     return System.currentTimeMillis() - location.getTime();
