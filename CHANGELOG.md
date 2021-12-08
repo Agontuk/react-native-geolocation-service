@@ -1,5 +1,11 @@
 # Changelog
 
+### 5.3.0-beta.4 (December 08, 2021)
+ - iOS: rewrite implementation
+ - iOS: revert back to use `requestLocation` API to avoid cached location issue
+ - iOS: fix `getCurrentPosition` not working issue without timeout
+ - iOS: remove `distanceFilter` support in `getCurrentPosition` API
+
 ### 5.3.0-beta.3 (September 25, 2021)
  - Android: fix NativeEventEmitter warnings in RN 0.65
 
