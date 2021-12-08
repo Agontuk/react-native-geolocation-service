@@ -29,13 +29,6 @@ class LocationProvider: NSObject {
   func requestPermission(_ level: String) -> Void {
     checkPlistKeys(level)
 
-    let currentStatus = CLLocationManager.authorizationStatus()
-
-    if currentStatus != .notDetermined {
-      delegate?.onPermissionChange(self, status: currentStatus)
-      return
-    }
-
     if level == "whenInUse" {
       locationManager.requestWhenInUseAuthorization()
     } else if level == "always" {

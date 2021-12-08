@@ -27,6 +27,13 @@ class RNFusedLocation: RCTEventEmitter {
       return
     }
 
+    let currentStatus = CLLocationManager.authorizationStatus()
+
+    if currentStatus != .notDetermined {
+      resolve(toPermissionStatus(currentStatus).rawValue)
+      return
+    }
+
     if permissionProvider == nil {
       permissionProvider = LocationProvider()
       permissionProvider!.delegate = self
@@ -97,18 +104,7 @@ extension RNFusedLocation {
 
 extension RNFusedLocation: LocationProviderDelegate {
   func onPermissionChange(_ provider: LocationProvider, status: CLAuthorizationStatus) {
-    var permissionStatus = PermissionStatus.denied
-
-    switch status {
-      case .authorizedAlways, .authorizedWhenInUse:
-        permissionStatus = PermissionStatus.granted
-      case .restricted:
-        permissionStatus = PermissionStatus.restricted
-      default:
-        break
-    }
-
-    permissionHandler?(permissionStatus.rawValue)
+    permissionHandler?(toPermissionStatus(status).rawValue)
     permissionHandler = nil
     permissionProvider?.delegate = nil
     permissionProvider = nil

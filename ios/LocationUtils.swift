@@ -20,6 +20,21 @@ struct LocationRequest {
   }
 }
 
+func toPermissionStatus(_ status: CLAuthorizationStatus) -> PermissionStatus {
+  var permissionStatus = PermissionStatus.denied
+
+  switch status {
+    case .authorizedAlways, .authorizedWhenInUse:
+      permissionStatus = PermissionStatus.granted
+    case .restricted:
+      permissionStatus = PermissionStatus.restricted
+    default:
+      break
+  }
+
+  return permissionStatus
+}
+
 func locationToDict(_ location: CLLocation) -> [String: Any] {
   return [
     "coords": [
