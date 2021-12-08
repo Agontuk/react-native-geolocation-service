@@ -5,11 +5,15 @@ import CoreLocation
 class RNFusedLocation: RCTEventEmitter {
   private var continuousLocationProvider: LocationProvider? = nil
   private var permissionProvider: LocationProvider? = nil
+  private var permissionHandler: RCTPromiseResolveBlock? = nil
+  private var pendingRequests: [LocationProvider: LocationRequest] = [:]
   private var hasListeners: Bool = false
 
   deinit {
     continuousLocationProvider = nil
     permissionProvider = nil
+    permissionHandler = nil
+    pendingRequests.removeAll()
   }
 
   // MARK: Bridge Method
@@ -25,23 +29,11 @@ class RNFusedLocation: RCTEventEmitter {
 
     if permissionProvider == nil {
       permissionProvider = LocationProvider()
+      permissionProvider!.delegate = self
     }
 
-    permissionProvider!.requestPermission(level, handler: { [self] (status) -> Void in
-      var permissionStatus = PermissionStatus.denied
-
-      switch status {
-        case .authorizedAlways, .authorizedWhenInUse:
-          permissionStatus = PermissionStatus.granted
-        case .restricted:
-          permissionStatus = PermissionStatus.restricted
-        default:
-          break
-      }
-
-      resolve(permissionStatus.rawValue)
-      permissionProvider = nil
-    })
+    permissionHandler = resolve
+    permissionProvider!.requestPermission(level)
   }
 
   // MARK: Bridge Method
@@ -51,16 +43,11 @@ class RNFusedLocation: RCTEventEmitter {
     errorCallback: @escaping RCTResponseSenderBlock
   ) -> Void {
     let locationOptions = LocationOptions(options)
+    let locationProvider = LocationProvider()
+    locationProvider.delegate = self
 
-    locationProvider.getCurrentLocation(
-      locationOptions,
-      successHandler: { (location) -> Void in
-        successCallback([locationToDict(location)])
-      },
-      errorHandler: { (err, message) -> Void in
-        errorCallback([buildError(err, message ?? "")])
-      }
-    )
+    pendingRequests[locationProvider] = LocationRequest(successCallback, errorCallback)
+    locationProvider.getCurrentLocation(locationOptions)
   }
 
   // MARK: Bridge Method
@@ -69,29 +56,17 @@ class RNFusedLocation: RCTEventEmitter {
 
     if continuousLocationProvider == nil {
       continuousLocationProvider = LocationProvider()
+      continuousLocationProvider!.delegate = self
     }
 
-    continuousLocationProvider!.requestLocationUpdates(
-      locationOptions,
-      successHandler: { [self] (location) -> Void in
-        if (hasListeners) {
-          sendEvent(withName: "geolocationDidChange", body: locationToDict(location))
-        }
-      },
-      errorHandler: { [self] (err, message) -> Void in
-        if (hasListeners) {
-          sendEvent(withName: "geolocationError", body: buildError(err, message ?? ""))
-        }
-      }
-    )
+    continuousLocationProvider!.requestLocationUpdates(locationOptions)
   }
 
   // MARK: Bridge Method
   @objc func stopLocationUpdate() -> Void {
-    if continuousLocationProvider != nil {
-      continuousLocationProvider!.removeLocationUpdates()
-      continuousLocationProvider = nil
-    }
+    continuousLocationProvider?.removeLocationUpdates()
+    continuousLocationProvider?.delegate = nil
+    continuousLocationProvider = nil
   }
 }
 
@@ -117,5 +92,51 @@ extension RNFusedLocation {
 
   override func stopObserving() -> Void {
     hasListeners = false
+  }
+}
+
+extension RNFusedLocation: LocationProviderDelegate {
+  func onPermissionChange(_ provider: LocationProvider, status: CLAuthorizationStatus) {
+    var permissionStatus = PermissionStatus.denied
+
+    switch status {
+      case .authorizedAlways, .authorizedWhenInUse:
+        permissionStatus = PermissionStatus.granted
+      case .restricted:
+        permissionStatus = PermissionStatus.restricted
+      default:
+        break
+    }
+
+    permissionHandler?(permissionStatus.rawValue)
+    permissionHandler = nil
+    permissionProvider?.delegate = nil
+    permissionProvider = nil
+  }
+
+  func onLocationChange(_ provider: LocationProvider, location: CLLocation) {
+    let locationData = locationToDict(location)
+
+    if provider == continuousLocationProvider && hasListeners {
+      sendEvent(withName: "geolocationDidChange", body: locationData)
+      return
+    }
+
+    guard let locationRequest: LocationRequest = pendingRequests[provider] else { return }
+    locationRequest.onSuccess([locationData])
+    pendingRequests.removeValue(forKey: provider)
+  }
+
+  func onLocationError(_ provider: LocationProvider, err: LocationError, message: String?) {
+    let errData = buildError(err, message ?? "")
+
+    if provider == continuousLocationProvider && hasListeners {
+      sendEvent(withName: "geolocationError", body: errData)
+      return
+    }
+
+    guard let locationRequest: LocationRequest = pendingRequests[provider] else { return }
+    locationRequest.onError([errData])
+    pendingRequests.removeValue(forKey: provider)
   }
 }

@@ -10,6 +10,16 @@ enum PermissionStatus: String {
   case disabled, granted, denied, restricted
 }
 
+struct LocationRequest {
+  let onSuccess: RCTResponseSenderBlock
+  let onError: RCTResponseSenderBlock
+
+  init(_ successHandler: @escaping RCTResponseSenderBlock, _ errorHandler: @escaping RCTResponseSenderBlock) {
+    self.onSuccess = successHandler
+    self.onError = errorHandler
+  }
+}
+
 func locationToDict(_ location: CLLocation) -> [String: Any] {
   return [
     "coords": [
