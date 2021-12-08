@@ -1,17 +1,18 @@
 import CoreLocation
 
-typealias PermissionHandler = (_ status: CLAuthorizationStatus) -> Void
-typealias SuccessHandler = (_ location: CLLocation) -> Void
-typealias ErrorHandler = (_ err: LocationError, _ message: String?) -> Void
+protocol LocationProviderDelegate: AnyObject {
+  func onPermissionChange(_ provider: LocationProvider, status: CLAuthorizationStatus)
+  func onLocationChange(_ provider: LocationProvider, location: CLLocation)
+  func onLocationError(_ provider: LocationProvider, err: LocationError, message: String?)
+}
 
 class LocationProvider: NSObject {
   private let locationManager: CLLocationManager
   private var locationOptions: LocationOptions? = nil
   private var isSingleUpdate: Bool = false
-  private var onLocationChange: SuccessHandler? = nil
-  private var onLocationError: ErrorHandler? = nil
-  private var onPermissionChange: PermissionHandler? = nil
   private var timeoutTimer: Timer? = nil
+
+  weak var delegate: LocationProviderDelegate?
 
   override init() {
     locationManager = CLLocationManager()
@@ -22,23 +23,18 @@ class LocationProvider: NSObject {
   deinit {
     removeLocationUpdates()
     timeoutTimer?.invalidate()
-    onLocationChange = nil
-    onLocationError = nil
-    onPermissionChange = nil
     locationManager.delegate = nil;
   }
 
-  func requestPermission(_ level: String, handler: @escaping PermissionHandler) -> Void {
+  func requestPermission(_ level: String) -> Void {
     checkPlistKeys(level)
 
     let currentStatus = CLLocationManager.authorizationStatus()
 
     if currentStatus != .notDetermined {
-      handler(currentStatus)
+      delegate?.onPermissionChange(self, status: currentStatus)
       return
     }
-
-    onPermissionChange = handler
 
     if level == "whenInUse" {
       locationManager.requestWhenInUseAuthorization()
@@ -47,11 +43,7 @@ class LocationProvider: NSObject {
     }
   }
 
-  func getCurrentLocation(
-    _ options: LocationOptions,
-    successHandler: @escaping SuccessHandler,
-    errorHandler: @escaping ErrorHandler
-  ) -> Void {
+  func getCurrentLocation(_ options: LocationOptions) -> Void {
     if locationManager.location != nil {
       let elapsedTime = (Date().timeIntervalSince1970 - locationManager.location!.timestamp.timeIntervalSince1970) * 1000
 
@@ -63,15 +55,13 @@ class LocationProvider: NSObject {
         #if DEBUG
           NSLog("RNLocation: returning cached location")
         #endif
-        successHandler(locationManager.location!)
+        delegate?.onLocationChange(self, location: locationManager.location!)
         return
       }
     }
 
     isSingleUpdate = true
     locationOptions = options
-    onLocationChange = successHandler
-    onLocationError = errorHandler
 
     locationManager.desiredAccuracy = options.accuracy
     locationManager.distanceFilter = kCLDistanceFilterNone
@@ -90,15 +80,9 @@ class LocationProvider: NSObject {
     }
   }
 
-  func requestLocationUpdates(
-    _ options: LocationOptions,
-    successHandler: @escaping SuccessHandler,
-    errorHandler: @escaping ErrorHandler
-  ) -> Void {
+  func requestLocationUpdates(_ options: LocationOptions) -> Void {
     isSingleUpdate = false
     locationOptions = options
-    onLocationChange = successHandler
-    onLocationError = errorHandler
 
     locationManager.desiredAccuracy = options.accuracy
     locationManager.distanceFilter = options.distanceFilter
@@ -128,7 +112,7 @@ class LocationProvider: NSObject {
       NSLog("RNLocation: request timed out")
     #endif
 
-    onLocationError?(LocationError.TIMEOUT, nil)
+    delegate?.onLocationError(self, err: LocationError.TIMEOUT, message: nil)
     locationManager.stopUpdatingLocation()
   }
 }
@@ -136,12 +120,12 @@ class LocationProvider: NSObject {
 extension LocationProvider: CLLocationManagerDelegate {
   func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
     // When CLLocationManager instance is created, it'll trigger this method.
-    // Status can be undetermined and permission handler will be nil in that case.
-    if status == .notDetermined || onPermissionChange == nil {
+    // Status can be undetermined in that case.
+    if status == .notDetermined {
       return
     }
 
-    onPermissionChange!(status)
+    delegate?.onPermissionChange(self, status: status)
   }
 
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -151,7 +135,7 @@ extension LocationProvider: CLLocationManagerDelegate {
       NSLog("RNLocation: \(location.coordinate.latitude), \(location.coordinate.longitude)")
     #endif
 
-    onLocationChange?(location)
+    delegate?.onLocationChange(self, location: location)
 
     if (isSingleUpdate) {
       timeoutTimer?.invalidate()
@@ -180,7 +164,7 @@ extension LocationProvider: CLLocationManagerDelegate {
       NSLog("RNLocation: \(error.localizedDescription)")
     }
 
-    onLocationError?(err, message)
+    delegate?.onLocationError(self, err: err, message: message)
 
     if (isSingleUpdate) {
       timeoutTimer?.invalidate()
