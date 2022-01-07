@@ -66,23 +66,34 @@ public class LocationUtils {
 
   /**
    * Check if location is enabled on the device.
+   * https://androidx.tech/artifacts/core/core/1.8.0-alpha02-source/androidx/core/location/LocationManagerCompat.java.html
    */
   public static boolean isLocationEnabled(Context context) {
-    int locationMode;
-    String locationProviders;
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-      try {
-        locationMode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
-      } catch (Settings.SettingNotFoundException e) {
-        return false;
-      }
-
-      return locationMode != Settings.Secure.LOCATION_MODE_OFF;
-    } else {
-      locationProviders = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
-      return !TextUtils.isEmpty(locationProviders);
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+      return !TextUtils.isEmpty(
+        Settings.Secure.getString(context.getContentResolver(),
+          Settings.Secure.LOCATION_PROVIDERS_ALLOWED));
     }
+
+    if (Build.VERSION.SDK_INT == Build.VERSION_CODES.KITKAT) {
+      return Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE,
+        Settings.Secure.LOCATION_MODE_OFF) != Settings.Secure.LOCATION_MODE_OFF;
+    }
+
+    LocationManager locationManager;
+
+    try {
+      locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+    } catch (Exception e) {
+      return false;
+    }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      return locationManager.isLocationEnabled();
+    }
+
+    return locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+      || locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
   }
 
   /**
