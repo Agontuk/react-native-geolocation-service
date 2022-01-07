@@ -126,7 +126,7 @@ public class FusedLocationProvider implements LocationProvider {
     if (forceRequestLocation && locationEnabled) {
       startLocationUpdates();
     } else {
-      LocationError error = !forceRequestLocation ? LocationError.SETTINGS_NOT_SATISFIED : LocationError.POSITION_UNAVAILABLE;
+      LocationError error = locationEnabled ? LocationError.SETTINGS_NOT_SATISFIED : LocationError.POSITION_UNAVAILABLE;
       locationChangeListener.onLocationError(error, null);
     }
 
@@ -178,8 +178,20 @@ public class FusedLocationProvider implements LocationProvider {
 
           switch (exception.getStatusCode()) {
             case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-              if (!locationOptions.isShowLocationDialog()) {
-                locationChangeListener.onLocationError(LocationError.SETTINGS_NOT_SATISFIED, null);
+              boolean showLocationDialog = locationOptions.isShowLocationDialog();
+              boolean forceRequestLocation = locationOptions.isForceRequestLocation();
+              boolean locationEnabled = LocationUtils.isLocationEnabled(context);
+
+              if (!showLocationDialog) {
+                if (forceRequestLocation && locationEnabled) {
+                  startLocationUpdates();
+                } else {
+                  locationChangeListener.onLocationError(
+                    locationEnabled ? LocationError.SETTINGS_NOT_SATISFIED : LocationError.POSITION_UNAVAILABLE,
+                    null
+                  );
+                }
+
                 break;
               }
 
