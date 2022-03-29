@@ -68,7 +68,11 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     ReactApplicationContext context = getContext();
 
     if (!LocationUtils.hasLocationPermission(context)) {
-      error.invoke(LocationUtils.buildError(LocationError.PERMISSION_DENIED, null));
+      try {
+        error.invoke(LocationUtils.buildError(LocationError.PERMISSION_DENIED, null));
+      } catch (RuntimeException e) {
+        Log.w(TAG, e.getMessage());
+      }
       return;
     }
 
@@ -82,13 +86,21 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     locationProvider.getCurrentLocation(locationOptions, new LocationChangeListener() {
       @Override
       public void onLocationChange(Location location) {
-        success.invoke(LocationUtils.locationToMap(location));
+        try {
+          success.invoke(LocationUtils.locationToMap(location));
+        } catch (RuntimeException e) {
+          Log.w(TAG, e.getMessage());
+        }
         singleLocationProviders.remove(key);
       }
 
       @Override
       public void onLocationError(LocationError locationError, @Nullable String message) {
-        error.invoke(LocationUtils.buildError(locationError, message));
+        try {
+          error.invoke(LocationUtils.buildError(locationError, message));
+        } catch (RuntimeException e) {
+          Log.w(TAG, e.getMessage());
+        }
         singleLocationProviders.remove(key);
       }
     });
