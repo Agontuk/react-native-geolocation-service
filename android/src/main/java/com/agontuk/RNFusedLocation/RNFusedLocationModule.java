@@ -17,20 +17,19 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
 
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.Set;
 
-public class RNFusedLocationModule extends ReactContextBaseJavaModule implements ActivityEventListener {
+public class RNFusedLocationModule extends ReactContextBaseJavaModule implements ActivityEventListener, LocationChangeListener {
   public static final String TAG = "RNFusedLocation";
-  private int singleLocationProviderKeyCounter = 1;
-  private final HashMap<String, LocationProvider> singleLocationProviders;
+  private final HashMap<LocationProvider, PendingLocationRequest> pendingRequests;
   @Nullable private LocationProvider continuousLocationProvider;
 
   public RNFusedLocationModule(ReactApplicationContext reactContext) {
     super(reactContext);
 
     reactContext.addActivityEventListener(this);
-    this.singleLocationProviders = new HashMap<>();
+    this.pendingRequests = new HashMap<>();
 
     Log.i(TAG, TAG + " initialized");
   }
@@ -49,7 +48,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
       return;
     }
 
-    Collection<LocationProvider> providers = singleLocationProviders.values();
+    Set<LocationProvider> providers = pendingRequests.keySet();
 
     for (LocationProvider locationProvider: providers) {
       if (locationProvider.onActivityResult(requestCode, resultCode)) {
@@ -61,6 +60,40 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
   @Override
   public void onNewIntent(Intent intent) {
     //
+  }
+
+  @Override
+  public void onLocationChange(LocationProvider locationProvider, Location location) {
+    WritableMap locationData = LocationUtils.locationToMap(location);
+
+    if (locationProvider.equals(continuousLocationProvider)) {
+      emitEvent("geolocationDidChange", locationData);
+      return;
+    }
+
+    PendingLocationRequest request =  pendingRequests.get(locationProvider);
+
+    if (request != null) {
+      request.successCallback.invoke(locationData);
+      pendingRequests.remove(locationProvider);
+    }
+  }
+
+  @Override
+  public void onLocationError(LocationProvider locationProvider, LocationError error, @Nullable String message) {
+    WritableMap errorData = LocationUtils.buildError(error, message);
+
+    if (locationProvider.equals(continuousLocationProvider)) {
+      emitEvent("geolocationError", errorData);
+      return;
+    }
+
+    PendingLocationRequest request =  pendingRequests.get(locationProvider);
+
+    if (request != null) {
+      request.errorCallback.invoke(errorData);
+      pendingRequests.remove(locationProvider);
+    }
   }
 
   @ReactMethod
@@ -75,23 +108,8 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     LocationOptions locationOptions = LocationOptions.fromReadableMap(options);
     final LocationProvider locationProvider = createLocationProvider(locationOptions.isForceLocationManager());
 
-    final String key = "provider-" + singleLocationProviderKeyCounter;
-    singleLocationProviders.put(key, locationProvider);
-    singleLocationProviderKeyCounter++;
-
-    locationProvider.getCurrentLocation(locationOptions, new LocationChangeListener() {
-      @Override
-      public void onLocationChange(Location location) {
-        success.invoke(LocationUtils.locationToMap(location));
-        singleLocationProviders.remove(key);
-      }
-
-      @Override
-      public void onLocationError(LocationError locationError, @Nullable String message) {
-        error.invoke(LocationUtils.buildError(locationError, message));
-        singleLocationProviders.remove(key);
-      }
-    });
+    pendingRequests.put(locationProvider, new PendingLocationRequest(success, error));
+    locationProvider.getCurrentLocation(locationOptions);
   }
 
   @ReactMethod
@@ -112,17 +130,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
       continuousLocationProvider = createLocationProvider(locationOptions.isForceLocationManager());
     }
 
-    continuousLocationProvider.requestLocationUpdates(locationOptions, new LocationChangeListener() {
-      @Override
-      public void onLocationChange(Location location) {
-        emitEvent("geolocationDidChange", LocationUtils.locationToMap(location));
-      }
-
-      @Override
-      public void onLocationError(LocationError error, @Nullable String message) {
-        emitEvent("geolocationError", LocationUtils.buildError(error, message));
-      }
-    });
+    continuousLocationProvider.requestLocationUpdates(locationOptions);
   }
 
   @ReactMethod
@@ -148,10 +156,10 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
     boolean playServicesAvailable = LocationUtils.isGooglePlayServicesAvailable(context);
 
     if (forceLocationManager || !playServicesAvailable) {
-      return new LocationManagerProvider(context);
+      return new LocationManagerProvider(context, this);
     }
 
-    return new FusedLocationProvider(context);
+    return new FusedLocationProvider(context, this);
   }
 
   private void emitEvent(String eventName, WritableMap data) {
@@ -160,5 +168,15 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
 
   private ReactApplicationContext getContext() {
     return getReactApplicationContext();
+  }
+
+  private static class PendingLocationRequest {
+    final Callback successCallback;
+    final Callback errorCallback;
+
+    public PendingLocationRequest(Callback success, Callback error) {
+      this.successCallback = success;
+      this.errorCallback = error;
+    }
   }
 }

@@ -19,14 +19,13 @@ import java.util.List;
 
 public class LocationManagerProvider implements LocationProvider {
   private final LocationManager locationManager;
-
-  private LocationChangeListener locationChangeListener;
+  private final LocationChangeListener locationChangeListener;
 
   private boolean isSingleUpdate = false;
   private final LocationListener locationListener = new LocationListener() {
     @Override
     public void onLocationChanged(Location location) {
-      locationChangeListener.onLocationChange(location);
+      locationChangeListener.onLocationChange(LocationManagerProvider.this, location);
 
       if (isSingleUpdate) {
         timeoutHandler.removeCallbacks(timeoutRunnable);
@@ -50,31 +49,43 @@ public class LocationManagerProvider implements LocationProvider {
 
     @Override
     public void onProviderDisabled(String provider) {
-      locationChangeListener.onLocationError(LocationError.POSITION_UNAVAILABLE, null);
+      locationChangeListener.onLocationError(
+        LocationManagerProvider.this,
+        LocationError.POSITION_UNAVAILABLE,
+        null
+      );
     }
   };
   private final Handler timeoutHandler = new Handler(Looper.getMainLooper());
   private final Runnable timeoutRunnable = new Runnable() {
     @Override
     public void run() {
-      locationChangeListener.onLocationError(LocationError.TIMEOUT, null);
+      locationChangeListener.onLocationError(
+        LocationManagerProvider.this,
+        LocationError.TIMEOUT,
+        null
+      );
       removeLocationUpdates();
     }
   };
 
-  public LocationManagerProvider(ReactApplicationContext context) {
+  public LocationManagerProvider(ReactApplicationContext context, LocationChangeListener locationChangeListener) {
+    this.locationChangeListener = locationChangeListener;
     this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
   }
 
   @SuppressLint("MissingPermission")
   @Override
-  public void getCurrentLocation(LocationOptions locationOptions, LocationChangeListener locationChangeListener) {
+  public void getCurrentLocation(LocationOptions locationOptions) {
     this.isSingleUpdate = true;
-    this.locationChangeListener = locationChangeListener;
     String provider = getBestProvider(locationOptions.getAccuracy());
 
     if (provider == null) {
-      locationChangeListener.onLocationError(LocationError.POSITION_UNAVAILABLE, null);
+      locationChangeListener.onLocationError(
+        LocationManagerProvider.this,
+        LocationError.POSITION_UNAVAILABLE,
+        null
+      );
       return;
     }
 
@@ -84,7 +95,7 @@ public class LocationManagerProvider implements LocationProvider {
       LocationUtils.getLocationAge(location) < locationOptions.getMaximumAge()
     ) {
       Log.i(RNFusedLocationModule.TAG, "returning cached location.");
-      locationChangeListener.onLocationChange(location);
+      locationChangeListener.onLocationChange(LocationManagerProvider.this, location);
       return;
     }
 
@@ -102,13 +113,16 @@ public class LocationManagerProvider implements LocationProvider {
   }
 
   @Override
-  public void requestLocationUpdates(LocationOptions locationOptions, LocationChangeListener locationChangeListener) {
+  public void requestLocationUpdates(LocationOptions locationOptions) {
     this.isSingleUpdate = false;
-    this.locationChangeListener = locationChangeListener;
     String provider = getBestProvider(locationOptions.getAccuracy());
 
     if (provider == null) {
-      locationChangeListener.onLocationError(LocationError.POSITION_UNAVAILABLE, null);
+      locationChangeListener.onLocationError(
+        LocationManagerProvider.this,
+        LocationError.POSITION_UNAVAILABLE,
+        null
+      );
       return;
     }
 

@@ -1,11 +1,11 @@
 package com.agontuk.RNFusedLocation;
 
 public interface LocationProvider {
-  void getCurrentLocation(LocationOptions locationOptions, LocationChangeListener locationChangeListener);
+  void getCurrentLocation(LocationOptions locationOptions);
 
   boolean onActivityResult(int requestCode, int resultCode);
 
-  void requestLocationUpdates(LocationOptions locationOptions, LocationChangeListener locationChangeListener);
+  void requestLocationUpdates(LocationOptions locationOptions);
 
   void removeLocationUpdates();
 }
