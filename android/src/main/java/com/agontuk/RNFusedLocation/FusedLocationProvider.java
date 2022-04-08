@@ -164,7 +164,7 @@ public class FusedLocationProvider implements LocationProvider {
     locationRequest.setPriority(priority)
       .setInterval(options.getInterval())
       .setFastestInterval(options.getFastestInterval())
-      .setSmallestDisplacement(options.getDistanceFilter());
+      .setSmallestDisplacement(isSingleUpdate ? 0 : options.getDistanceFilter());
 
     return locationRequest;
   }

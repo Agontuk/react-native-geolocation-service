@@ -102,7 +102,7 @@ public class LocationManagerProvider implements LocationProvider {
     startLocationUpdates(
       provider,
       locationOptions.getInterval(),
-      locationOptions.getDistanceFilter(),
+      0,
       locationOptions.getTimeout()
     );
   }
