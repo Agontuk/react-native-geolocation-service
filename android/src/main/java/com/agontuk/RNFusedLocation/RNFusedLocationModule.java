@@ -142,6 +142,13 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule implements
   }
 
   @ReactMethod
+  public void showLocationDialog() {
+      if (continuousLocationProvider != null) {
+      continuousLocationProvider.showLocationDialog();
+    }
+  }
+
+  @ReactMethod
   public void addListener(String eventName) {
     // Keep: Required for RN built in Event Emitter Calls.
   }

@@ -40,6 +40,10 @@ const Geolocation = {
 
   stopObserving: function () {
     throw new Error('Method not supported by browser');
+  },
+
+  showLocationDialog: function () {
+    throw new Error('Method not supported by browser');
   }
 };
 

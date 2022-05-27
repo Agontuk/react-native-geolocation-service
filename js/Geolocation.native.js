@@ -108,6 +108,14 @@ const Geolocation = {
 
       subscriptions = [];
     }
+  },
+
+  showLocationDialog: () => {
+    if (Platform.OS === "ios") {
+      console.warn("ShowLocationDialog not supported on IOS");
+    } else {
+      RNFusedLocation.showLocationDialog();
+    }
   }
 };
 

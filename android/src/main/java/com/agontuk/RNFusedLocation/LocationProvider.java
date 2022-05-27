@@ -8,4 +8,6 @@ public interface LocationProvider {
   void requestLocationUpdates(LocationOptions locationOptions);
 
   void removeLocationUpdates();
+
+  void showLocationDialog();
 }
