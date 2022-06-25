@@ -1,6 +1,6 @@
 {
   "name": "react-native-geolocation-service",
-  "version": "5.3.0-beta.4",
+  "version": "5.3.0",
   "description": "React native geolocation service for iOS and android",
   "main": "js/index.js",
   "scripts": {
