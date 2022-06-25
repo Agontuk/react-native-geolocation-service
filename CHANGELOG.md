@@ -1,5 +1,10 @@
 # Changelog
 
+### 5.3.0 (June 25, 2022)
+ - Android: set `distanceFilter` to `0` in `getCurrentPosition` API
+ - Android: update default version of play services location to 18.0.0
+ - Android: rewrite location change listener logic to fix `Illegal callback invocation` error
+
 ### 5.3.0-beta.4 (December 08, 2021)
  - iOS: rewrite implementation
  - iOS: revert back to use `requestLocation` API to avoid cached location issue
