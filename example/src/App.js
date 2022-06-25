@@ -190,7 +190,7 @@ export default function App() {
 
   const startForegroundService = async () => {
     if (Platform.Version >= 26) {
-      await VIForegroundService.createNotificationChannel({
+      await VIForegroundService.getInstance().createNotificationChannel({
         id: 'locationChannel',
         name: 'Location Tracking Channel',
         description: 'Tracks location of user',
@@ -198,7 +198,7 @@ export default function App() {
       });
     }
 
-    return VIForegroundService.startService({
+    return VIForegroundService.getInstance().startService({
       channelId: 'locationChannel',
       id: 420,
       title: appConfig.displayName,
@@ -208,7 +208,7 @@ export default function App() {
   };
 
   const stopForegroundService = useCallback(() => {
-    VIForegroundService.stopService().catch((err) => err);
+    VIForegroundService.getInstance().stopService().catch((err) => err);
   }, []);
 
   return (
