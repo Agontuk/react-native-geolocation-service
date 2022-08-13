@@ -37,8 +37,8 @@ class LocationProvider: NSObject {
   }
 
   func getCurrentLocation(_ options: LocationOptions) -> Void {
-    if locationManager.location != nil {
-      let elapsedTime = (Date().timeIntervalSince1970 - locationManager.location!.timestamp.timeIntervalSince1970) * 1000
+    if let location = locationManager.location {
+      let elapsedTime = (Date().timeIntervalSince1970 - location.timestamp.timeIntervalSince1970) * 1000
 
       #if DEBUG
         NSLog("RNLocation: elapsedTime=\(elapsedTime)ms, maxAge=\(options.maximumAge)ms")
@@ -48,7 +48,7 @@ class LocationProvider: NSObject {
         #if DEBUG
           NSLog("RNLocation: returning cached location")
         #endif
-        delegate?.onLocationChange(self, location: locationManager.location!)
+        delegate?.onLocationChange(self, location: location)
         return
       }
     }
