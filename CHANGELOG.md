@@ -1,5 +1,8 @@
 # Changelog
 
+### 5.3.1 (September 23, 2022)
+ - iOS: fix crash due to location becoming nil ([#370](https://github.com/Agontuk/react-native-geolocation-service/pull/370))
+
 ### 5.3.0 (June 25, 2022)
  - Android: set `distanceFilter` to `0` in `getCurrentPosition` API
  - Android: update default version of play services location to 18.0.0
