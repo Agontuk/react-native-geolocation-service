@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Button,
@@ -12,7 +12,7 @@ import {
   ToastAndroid,
   View,
 } from 'react-native';
-import Geolocation from 'react-native-geolocation-service';
+import Geolocation, { GeoPosition } from 'react-native-geolocation-service';
 import VIForegroundService from '@voximplant/react-native-foreground-service';
 
 import MapView from './MapView';
@@ -26,15 +26,29 @@ export default function App() {
   const [observing, setObserving] = useState(false);
   const [foregroundService, setForegroundService] = useState(false);
   const [useLocationManager, setUseLocationManager] = useState(false);
-  const [location, setLocation] = useState(null);
+  const [location, setLocation] = useState<GeoPosition | null>(null);
 
-  const watchId = useRef(null);
+  const watchId = useRef<number | null>(null);
+
+  const stopLocationUpdates = () => {
+    if (Platform.OS === 'android') {
+      VIForegroundService.getInstance()
+        .stopService()
+        .catch((err: any) => err);
+    }
+
+    if (watchId.current !== null) {
+      Geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+      setObserving(false);
+    }
+  };
 
   useEffect(() => {
     return () => {
-      removeLocationUpdates();
+      stopLocationUpdates();
     };
-  }, [removeLocationUpdates]);
+  }, []);
 
   const hasPermissionIOS = async () => {
     const openSetting = () => {
@@ -115,11 +129,11 @@ export default function App() {
     }
 
     Geolocation.getCurrentPosition(
-      (position) => {
+      position => {
         setLocation(position);
         console.log(position);
       },
-      (error) => {
+      error => {
         Alert.alert(`Code ${error.code}`, error.message);
         setLocation(null);
         console.log(error);
@@ -154,11 +168,11 @@ export default function App() {
     setObserving(true);
 
     watchId.current = Geolocation.watchPosition(
-      (position) => {
+      position => {
         setLocation(position);
         console.log(position);
       },
-      (error) => {
+      error => {
         setLocation(null);
         console.log(error);
       },
@@ -179,18 +193,9 @@ export default function App() {
     );
   };
 
-  const removeLocationUpdates = useCallback(() => {
-    if (watchId.current !== null) {
-      stopForegroundService();
-      Geolocation.clearWatch(watchId.current);
-      watchId.current = null;
-      setObserving(false);
-    }
-  }, [stopForegroundService]);
-
   const startForegroundService = async () => {
     if (Platform.Version >= 26) {
-      await VIForegroundService.createNotificationChannel({
+      await VIForegroundService.getInstance().createNotificationChannel({
         id: 'locationChannel',
         name: 'Location Tracking Channel',
         description: 'Tracks location of user',
@@ -198,7 +203,7 @@ export default function App() {
       });
     }
 
-    return VIForegroundService.startService({
+    return VIForegroundService.getInstance().startService({
       channelId: 'locationChannel',
       id: 420,
       title: appConfig.displayName,
@@ -207,18 +212,13 @@ export default function App() {
     });
   };
 
-  const stopForegroundService = useCallback(() => {
-    VIForegroundService.stopService().catch((err) => err);
-  }, []);
-
   return (
     <View style={styles.mainContainer}>
       <MapView coords={location?.coords || null} />
 
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-      >
+        contentContainerStyle={styles.contentContainer}>
         <View>
           <View style={styles.option}>
             <Text>Enable High Accuracy</Text>
@@ -278,7 +278,7 @@ export default function App() {
             />
             <Button
               title="Stop Observing"
-              onPress={removeLocationUpdates}
+              onPress={stopLocationUpdates}
               disabled={!observing}
             />
           </View>

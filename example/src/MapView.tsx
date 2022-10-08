@@ -1,9 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
+import { GeoCoordinates } from 'react-native-geolocation-service';
 import RNMapView, { Circle, Marker } from 'react-native-maps';
 
-const MapView = ({ coords }) => {
-  const mapRef = useRef(null);
+interface MapViewProps {
+  coords: GeoCoordinates | null;
+}
+
+const MapView = ({ coords }: MapViewProps) => {
+  const mapRef = useRef<RNMapView>(null);
 
   useEffect(() => {
     if (!!coords && mapRef.current) {
@@ -37,8 +42,7 @@ const MapView = ({ coords }) => {
         loadingEnabled
         loadingBackgroundColor="white"
         style={StyleSheet.absoluteFillObject}
-        rotateEnabled={false}
-      >
+        rotateEnabled={false}>
         {!!coords && (
           <>
             <Marker
@@ -56,8 +60,7 @@ const MapView = ({ coords }) => {
                     },
                   ],
                 }),
-              }}
-            >
+              }}>
               <View style={styles.dotContainer}>
                 <View style={[styles.arrow]} />
                 <View style={styles.dot} />
