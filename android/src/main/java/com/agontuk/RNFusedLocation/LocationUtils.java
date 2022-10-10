@@ -7,6 +7,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.Manifest;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.provider.Settings;
@@ -148,7 +149,37 @@ public class LocationUtils {
       map.putBoolean("mocked", location.isFromMockProvider());
     }
 
+    Bundle bundle = location.getExtras();
+    if (bundle != null) {
+      WritableMap extras = Arguments.createMap();
+      for (String key: bundle.keySet()) {
+        putIntoMap(extras, key, bundle.get(key));
+      }
+
+      map.putMap("extras", extras);
+    }
+
     return map;
+  }
+
+  private static void putIntoMap(WritableMap map, String key, Object value) {
+    if (value instanceof Integer || value instanceof Long) {
+      map.putInt(key, (Integer) value);
+    } else if (value instanceof Float) {
+      map.putDouble(key, (Float) value);
+    } else if (value instanceof Double) {
+      map.putDouble(key, (Double) value);
+    } else if (value instanceof String) {
+      map.putString(key, (String) value);
+    } else if (value instanceof Boolean) {
+      map.putBoolean(key, (Boolean) value);
+    } else if (value instanceof int[]
+      || value instanceof long[]
+      || value instanceof double[]
+      || value instanceof String[]
+      || value instanceof boolean[]) {
+      map.putArray(key,  Arguments.fromArray(value));
+    }
   }
 
   private static String getDefaultErrorMessage(LocationError locationError) {
