@@ -104,6 +104,9 @@ When promise resolves, returns the status of the authorization.
 #### `stopObserving()`
 Stops observing for device location changes. In addition, it removes all listeners previously registered.
 
+#### `showLocationDialog()`
+Show location enable dialog (android only).
+
 # Error Codes
 | Name | Code | Description |
 | --- | --- | --- |

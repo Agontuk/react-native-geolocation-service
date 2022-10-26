@@ -96,4 +96,6 @@ declare module "react-native-geolocation-service" {
   export function clearWatch(watchID: number): void;
 
   export function stopObserving(): void;
+
+  export function showLocationDialog(): void;
 }

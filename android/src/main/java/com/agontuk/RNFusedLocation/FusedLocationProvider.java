@@ -106,13 +106,13 @@ public class FusedLocationProvider implements LocationProvider {
             return;
           }
 
-          checkLocationSettings();
+          checkLocationSettings(locationOptions.isShowLocationDialog());
         }
       })
       .addOnFailureListener(new OnFailureListener() {
         @Override
         public void onFailure(@NonNull Exception e) {
-          checkLocationSettings();
+          checkLocationSettings(locationOptions.isShowLocationDialog());
         }
       });
   }
@@ -149,7 +149,7 @@ public class FusedLocationProvider implements LocationProvider {
     this.isSingleUpdate = false;
     this.locationOptions = locationOptions;
     this.locationRequest = buildLocationRequest(locationOptions);
-    checkLocationSettings();
+    checkLocationSettings(locationOptions.isShowLocationDialog());
   }
 
   @Override
@@ -169,7 +169,11 @@ public class FusedLocationProvider implements LocationProvider {
     return locationRequest;
   }
 
-  private void checkLocationSettings() {
+  public void showLocationDialog() {
+    checkLocationSettings(true);
+  }
+
+  private void checkLocationSettings(boolean showLocationDialog) {
     LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
     builder.addLocationRequest(locationRequest);
     LocationSettingsRequest locationSettingsRequest = builder.build();
@@ -192,7 +196,7 @@ public class FusedLocationProvider implements LocationProvider {
               boolean forceRequestLocation = locationOptions.isForceRequestLocation();
               boolean locationEnabled = LocationUtils.isLocationEnabled(context);
 
-              if (!showLocationDialog) {
+              if (!locationOptions.isShowLocationDialog()) {
                 if (forceRequestLocation && locationEnabled) {
                   startLocationUpdates();
                 } else {

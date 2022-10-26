@@ -140,6 +140,11 @@ public class LocationManagerProvider implements LocationProvider {
     locationManager.removeUpdates(locationListener);
   }
 
+  @Override
+  public void showLocationDialog() {
+   /// ignore
+  }
+
   @Nullable
   private String getBestProvider(LocationAccuracy locationAccuracy) {
     Criteria criteria = getProviderCriteria(locationAccuracy);
