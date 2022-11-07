@@ -133,3 +133,33 @@ Stops observing for device location changes. In addition, it removes all listene
     - Samsung: Access battery settings > app power saving > details > your app > disabled
     - Sony If you're running Android 6 or higher: Battery > from the menu in the upper right-hand corner > battery optimization > apps > your app
     - Xiaomi (MIUI OS) If you're running Android 6 or higher: Access your phone settings > additional settings > battery and performance > manage battery usage > apps > your app
+
+# Testing with Jest
+#### If you hit this error while running Jest, you might need to mock the module
+```js
+    Invariant Violation: Native module cannot be null.
+
+      at invariant (node_modules/invariant/invariant.js:40:15)
+      at new NativeEventEmitter (node_modules/react-native/Libraries/EventEmitter/NativeEventEmitter.js:37:7)
+      at Object.<anonymous> (node_modules/react-native-geolocation-service/js/Geolocation.native.js:4:30)
+      at Object.<anonymous> (node_modules/react-native-geolocation-service/js/index.js:1:1)
+```
+
+If you don't already have a Jest setup file configured, please add the following to your package.json jest configuration and create the new `jest.setup.js` file in project root:
+
+```js
+'jest': {
+        'setupFiles': [
+            './jest.setup.js'
+        ],
+    }
+```
+
+You can then add the following line to that setup file to mock `Geolocation.native.js`:
+
+```js
+jest.mock('react-native-geolocation-service', () => ({
+    requestAuthorization: jest.fn(),
+    getCurrentPosition: jest.fn(),
+}));
+```
