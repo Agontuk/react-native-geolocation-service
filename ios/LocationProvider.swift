@@ -58,7 +58,7 @@ class LocationProvider: NSObject {
 
     locationManager.desiredAccuracy = options.accuracy
     locationManager.distanceFilter = kCLDistanceFilterNone
-    locationManager.requestLocation()
+    locationManager.startUpdatingLocation()
 
     let timeout = options.timeout
 
