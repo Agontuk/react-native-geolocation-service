@@ -37,40 +37,42 @@ class LocationProvider: NSObject {
   }
 
   func getCurrentLocation(_ options: LocationOptions) -> Void {
-    if let location = locationManager.location {
-      let elapsedTime = (Date().timeIntervalSince1970 - location.timestamp.timeIntervalSince1970) * 1000
+      DispatchQueue.global(qos: .background).async {
+          if let location = self.locationManager.location {
+            let elapsedTime = (Date().timeIntervalSince1970 - location.timestamp.timeIntervalSince1970) * 1000
 
-      #if DEBUG
-        NSLog("RNLocation: elapsedTime=\(elapsedTime)ms, maxAge=\(options.maximumAge)ms")
-      #endif
+            #if DEBUG
+              NSLog("RNLocation: elapsedTime=\(elapsedTime)ms, maxAge=\(options.maximumAge)ms")
+            #endif
 
-      if elapsedTime < options.maximumAge {
-        #if DEBUG
-          NSLog("RNLocation: returning cached location")
-        #endif
-        delegate?.onLocationChange(self, location: location)
-        return
+            if elapsedTime < options.maximumAge {
+              #if DEBUG
+                NSLog("RNLocation: returning cached location")
+              #endif
+                self.delegate?.onLocationChange(self, location: location)
+              return
+            }
+          }
+
+          self.isSingleUpdate = true
+          self.locationOptions = options
+
+          self.locationManager.desiredAccuracy = options.accuracy
+          self.locationManager.distanceFilter = kCLDistanceFilterNone
+          self.locationManager.requestLocation()
+
+          let timeout = options.timeout
+
+          if timeout > 0 && timeout != Double.infinity {
+              self.timeoutTimer = Timer.scheduledTimer(
+              timeInterval: timeout / 1000.0, // timeInterval is in seconds
+              target: self,
+              selector: #selector(self.timerFired),
+              userInfo: nil,
+              repeats: false
+            )
+          }
       }
-    }
-
-    isSingleUpdate = true
-    locationOptions = options
-
-    locationManager.desiredAccuracy = options.accuracy
-    locationManager.distanceFilter = kCLDistanceFilterNone
-    locationManager.requestLocation()
-
-    let timeout = options.timeout
-
-    if timeout > 0 && timeout != Double.infinity {
-      timeoutTimer = Timer.scheduledTimer(
-        timeInterval: timeout / 1000.0, // timeInterval is in seconds
-        target: self,
-        selector: #selector(timerFired),
-        userInfo: nil,
-        repeats: false
-      )
-    }
   }
 
   func requestLocationUpdates(_ options: LocationOptions) -> Void {
@@ -137,31 +139,33 @@ extension LocationProvider: CLLocationManagerDelegate {
   }
 
   func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-    var err = LocationError.POSITION_UNAVAILABLE
-    var message: String? = nil
-
-    if let clErr = error as? CLError {
-      switch clErr.code {
-        case CLError.denied:
-          if !CLLocationManager.locationServicesEnabled() {
-            message = "Location service is turned off"
+      DispatchQueue.global(qos: .background).async {
+          var err = LocationError.POSITION_UNAVAILABLE
+          var message: String? = nil
+          
+          if let clErr = error as? CLError {
+              switch clErr.code {
+              case CLError.denied:
+                  if !CLLocationManager.locationServicesEnabled() {
+                      message = "Location service is turned off"
+                  } else {
+                      err = LocationError.PERMISSION_DENIED
+                  }
+              case CLError.network:
+                  message = "Unable to retrieve location due to a network failure"
+              default:
+                  break
+              }
           } else {
-            err = LocationError.PERMISSION_DENIED
+              NSLog("RNLocation: \(error.localizedDescription)")
           }
-        case CLError.network:
-          message = "Unable to retrieve location due to a network failure"
-        default:
-          break
+
+          self.delegate?.onLocationError(self, err: err, message: message)
+
+          if (self.isSingleUpdate) {
+              self.timeoutTimer?.invalidate()
+              self.locationManager.stopUpdatingLocation()
+          }
       }
-    } else {
-      NSLog("RNLocation: \(error.localizedDescription)")
-    }
-
-    delegate?.onLocationError(self, err: err, message: message)
-
-    if (isSingleUpdate) {
-      timeoutTimer?.invalidate()
-      locationManager.stopUpdatingLocation()
-    }
   }
 }
