@@ -24,6 +24,13 @@ npm install react-native-geolocation-service
 | <0.60      | 2.0.0           |
 | <0.57      | 1.1.0           |
 
+
+| iOS Version |
+|-------------|
+| 13+         |
+
+Using this package at iOS 12  causes the app to crash on open due to lack of Swift support.
+
 # Setup
  - See [docs/setup.md](docs/setup.md)
  - Check out example project
